@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>PROJECT: GAL — Gamifying Accounting Lessons</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#5B21B6" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <style>
+    :root {
+      --bg: #F8F7FC;
+      --card: #FFFFFF;
+      --border: #E9E5F5;
+      --primary: #5B21B6;
+      --primary-light: #EDE9FE;
+      --primary-dark: #4C1D95;
+      --text: #1E1B4B;
+      --text-body: #374151;
+      --muted: #6B7280;
+      --surface-alt: #FAFAFE;
+      --topbar-bg: rgba(255, 255, 255, 0.95);
+      --green-bg: #DCFCE7;
+      --green-text: #15803D;
+      --amber-bg: #FEF3C7;
+      --amber-text: #B45309;
+      --red-bg: #FEE2E2;
+      --red-text: #B91C1C;
+      --note-bg: #FEFCE8;
+      --note-border: #FDE047;
+      --note-text: #854D0E;
+      --personal-note-bg: #FAF5FF;
+      --scratch-bg: #FEFCE8;
+      --radius: 16px;
+    }
+
+    body.dark {
+      --bg: #0F0D1A;
+      --card: #1A162B;
+      --border: #2D2645;
+      --primary: #8B5CF6;
+      --primary-light: #2E2352;
+      --primary-dark: #C4B5FD;
+      --text: #F3F0FF;
+      --text-body: #D1D5DB;
+      --muted: #9CA3AF;
+      --surface-alt: #221C38;
+      --topbar-bg: rgba(26, 22, 43, 0.95);
+      --green-bg: #064E3B;
+      --green-text: #6EE7B7;
+      --amber-bg: #78350F;
+      --amber-text: #FCD34D;
+      --red-bg: #7F1D1D;
+      --red-text: #FCA5A5;
+      --note-bg: #2D2412;
+      --note-border: #A16207;
+      --note-text: #FDE68A;
+      --personal-note-bg: #271E42;
+      --scratch-bg: #252036;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 84px;
+      line-height: 1.5;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    /* Top Header */
+    .topbar {
+      position: sticky; top: 0; z-index: 20;
+      background: var(--topbar-bg); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    }
+    .brand h1 { font-size: 17px; font-weight: 800; color: var(--primary); letter-spacing: 0.3px; }
+    .brand p { font-size: 11px; color: var(--muted); }
+    .stats-row { display: flex; align-items: center; gap: 6px; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+    .pill-streak { background: #FFF7ED; color: #C2410C; border: 1px solid #FFEDD5; }
+    body.dark .pill-streak { background: #431407; color: #FDBA74; border-color: #7C2D12; }
+    .pill-xp { background: var(--primary-light); color: var(--primary); border: 1px solid var(--border); }
+    .icon-btn {
+      width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border);
+      background: var(--surface-alt); color: var(--text); font-size: 14px;
+      display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+    .icon-btn:active { transform: scale(0.92); }
+
+    /* Container */
+    .container { max-width: 540px; margin: 0 auto; padding: 16px; }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--primary); margin-bottom: 4px; }
+    .page-title { font-size: 22px; font-weight: 800; margin-bottom: 14px; }
+
+    /* Cards */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+      box-shadow: 0 2px 6px rgba(91, 33, 182, 0.04);
+    }
+    .card-clickable { cursor: pointer; transition: transform 0.12s ease, border-color 0.12s ease; }
+    .card-clickable:active { transform: scale(0.985); border-color: var(--primary); }
+
+    /* Badges */
+    .badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+    .badge-pass { background: var(--green-bg); color: var(--green-text); }
+    .badge-warn { background: var(--amber-bg); color: var(--amber-text); }
+    .badge-risk { background: var(--red-bg); color: var(--red-text); }
+    .badge-neutral { background: var(--surface-alt); color: var(--muted); border: 1px solid var(--border); }
+    .badge-purple { background: var(--primary-light); color: var(--primary); }
+
+    /* Progress Bar */
+    .progress-track { width: 100%; height: 8px; background: var(--primary-light); border-radius: 999px; overflow: hidden; margin-top: 8px; }
+    .progress-fill { height: 100%; background: var(--primary); border-radius: 999px; transition: width 0.3s ease; }
+
+    /* Daily XP Ring */
+    .xp-ring-wrap { position: relative; width: 64px; height: 64px; flex-shrink: 0; }
+    .xp-ring-wrap svg { transform: rotate(-90deg); width: 64px; height: 64px; }
+    .xp-ring-text {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; color: var(--primary);
+    }
+
+    /* Trend Chart Box */
+    .chart-wrap { width: 100%; overflow: hidden; margin-top: 8px; }
+    .chart-svg { width: 100%; height: auto; display: block; }
+
+    /* Buttons */
+    .btn {
+      width: 100%; padding: 13px 16px; border: none; border-radius: 12px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: opacity 0.15s ease;
+    }
+    .btn:active { opacity: 0.85; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-outline { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+    .btn-danger { background: var(--red-bg); color: var(--red-text); }
+    .btn-success { background: var(--green-bg); color: var(--green-text); }
+    .btn-warn { background: var(--amber-bg); color: var(--amber-text); }
+    .btn-disabled { background: var(--surface-alt); color: var(--muted); cursor: not-allowed; opacity: 0.7; }
+    .btn-sm { width: auto; padding: 7px 12px; font-size: 12px; border-radius: 10px; }
+
+    /* File Upload Label Button */
+    .file-btn {
+      position: relative; overflow: hidden; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .file-btn input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer;
+    }
+
+    /* Subject Row */
+    .subj-row { display: flex; align-items: center; gap: 12px; }
+    .subj-icon {
+      width: 46px; height: 46px; border-radius: 12px; background: var(--primary-light);
+      color: var(--primary); font-weight: 800; font-size: 13px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .subj-info { flex: 1; min-width: 0; }
+    .subj-title { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .subj-meta { font-size: 12px; color: var(--muted); }
+
+    /* Search & Chips */
+    .search-input {
+      width: 100%; padding: 12px 14px; border-radius: 14px; border: 1.5px solid var(--border);
+      background: var(--card); color: var(--text); font-size: 14px; outline: none;
+    }
+    .search-input:focus { border-color: var(--primary); }
+    .chip-strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 10px; }
+    .chip-btn {
+      padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border);
+      background: var(--card); color: var(--muted); font-size: 12px; font-weight: 700; white-space: nowrap; cursor: pointer;
+    }
+    .chip-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    /* Quiz & Mock Choices */
+    .choice-btn {
+      width: 100%; text-align: left; background: var(--card); border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 13px 14px; margin-bottom: 10px;
+      display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--text); cursor: pointer;
+    }
+    .choice-letter {
+      width: 26px; height: 26px; border-radius: 50%; background: var(--surface-alt); color: var(--text);
+      font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .choice-selected { border-color: var(--primary); background: var(--primary-light); }
+    .choice-selected .choice-letter { background: var(--primary); color: #fff; }
+    .choice-correct { border-color: #16A34A; background: var(--green-bg); }
+    .choice-correct .choice-letter { background: #16A34A; color: #fff; }
+    .choice-wrong { border-color: #DC2626; background: var(--red-bg); }
+    .choice-wrong .choice-letter { background: #DC2626; color: #fff; }
+
+    /* Mock Exam Question Pills */
+    .q-nav-strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; }
+    .q-pill {
+      min-width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid var(--border);
+      background: var(--card); font-size: 12px; font-weight: 700; color: var(--muted); cursor: pointer; flex-shrink: 0; position: relative;
+    }
+    .q-pill.answered { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+    .q-pill.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .q-pill.flagged::after { content: "🚩"; position: absolute; top: -6px; right: -4px; font-size: 10px; }
+
+    /* Sticky Highlighter Toolbar */
+    .hl-toolbar {
+      position: sticky; top: 63px; z-index: 15; background: var(--topbar-bg); backdrop-filter: blur(8px);
+      border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; margin-bottom: 12px;
+      box-shadow: 0 4px 12px rgba(91, 33, 182, 0.08);
+    }
+    .swatch-row { display: flex; align-items: center; gap: 7px; overflow-x: auto; padding: 2px 0; }
+    .swatch-btn { width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(128,128,128,0.35); cursor: pointer; flex-shrink: 0; transition: transform 0.12s ease; }
+    .swatch-btn.active { border: 2.5px solid var(--primary); transform: scale(1.12); box-shadow: 0 0 0 2px var(--card), 0 0 0 4px rgba(139,92,246,0.35); }
+    .color-picker-label {
+      width: 28px; height: 28px; border-radius: 50%; border: 1.5px dashed var(--primary);
+      background: var(--primary-light); color: var(--primary); font-size: 13px;
+      display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; position: relative; overflow: hidden;
+    }
+    .color-picker-label input[type="color"] { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+
+    .handout-body { font-size: 13.5px; white-space: pre-line; color: var(--text-body); user-select: text; -webkit-user-select: text; line-height: 1.65; }
+    mark.hl-mark { color: #1E1B4B; padding: 1px 3px; border-radius: 4px; cursor: pointer; }
+    .anno-bar { display: flex; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); align-items: center; flex-wrap: wrap; }
+    .anno-btn { padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-alt); font-size: 11px; font-weight: 700; color: var(--text); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+    .dot-indicator { width: 11px; height: 11px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.2); display: inline-block; }
+    .personal-note { margin-top: 8px; padding: 9px 12px; background: var(--personal-note-bg); border-left: 3px solid var(--primary); border-radius: 8px; font-size: 12.5px; color: var(--primary-dark); }
+
+    /* Flashcards */
+    .flashcard-box {
+      min-height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+      text-align: center; padding: 24px 20px; background: var(--card); border: 2px solid var(--border);
+      border-radius: 20px; cursor: pointer; box-shadow: 0 6px 16px rgba(91, 33, 182, 0.06);
+    }
+    .flashcard-box.flipped { border-color: var(--primary); background: var(--surface-alt); }
+    .fc-hint { font-size: 11px; color: var(--muted); margin-top: 18px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; }
+
+    /* Tabs */
+    .tab-bar { display: flex; gap: 6px; background: var(--primary-light); padding: 4px; border-radius: 12px; margin-bottom: 14px; }
+    .tab-btn { flex: 1; padding: 8px 6px; border: none; border-radius: 9px; font-size: 12px; font-weight: 700; background: transparent; color: var(--primary-dark); cursor: pointer; }
+    .tab-btn.active { background: var(--card); color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+    textarea.code-input { width: 100%; min-height: 120px; padding: 10px; border: 1.5px solid var(--border); border-radius: 12px; font-family: monospace; font-size: 12px; color: var(--text); background: var(--surface-alt); resize: vertical; }
+
+    /* Callouts */
+    .callout { padding: 12px 14px; border-radius: 12px; margin: 10px 0; font-size: 13px; }
+    .callout-note { background: var(--note-bg); border: 1px solid var(--note-border); color: var(--note-text); }
+    .callout-formula { background: var(--primary-light); border: 1px solid var(--border); color: var(--primary-dark); font-weight: 700; }
+
+    /* Floating Calculator & Scratchpad */
+    .tool-fab {
+      position: fixed; bottom: 20px; right: 16px; z-index: 40;
+      background: var(--primary); color: #fff; border: none; border-radius: 999px;
+      padding: 12px 16px; font-size: 13px; font-weight: 800;
+      box-shadow: 0 6px 20px rgba(91, 33, 182, 0.35); cursor: pointer; display: none; align-items: center; gap: 6px;
+    }
+    .tool-backdrop { position: fixed; inset: 0; background: rgba(15, 13, 26, 0.6); z-index: 50; display: none; align-items: flex-end; justify-content: center; }
+    .tool-backdrop.open { display: flex; }
+    .tool-sheet { width: 100%; max-width: 540px; background: var(--card); border-radius: 22px 22px 0 0; padding: 16px 16px 20px; box-shadow: 0 -8px 28px rgba(0,0,0,0.25); max-height: 82vh; overflow-y: auto; }
+    .calc-display { background: #1E1B4B; color: #fff; border-radius: 14px; padding: 12px 14px; text-align: right; margin-bottom: 10px; }
+    body.dark .calc-display { background: #0B0914; border: 1px solid var(--border); }
+    .calc-tape { font-size: 12px; color: #A5B4FC; min-height: 18px; word-break: break-all; }
+    .calc-val { font-size: 28px; font-weight: 800; letter-spacing: 0.4px; margin-top: 2px; word-break: break-all; }
+    .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .calc-key { padding: 13px 6px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-alt); font-size: 16px; font-weight: 700; color: var(--text); cursor: pointer; }
+    .calc-key.op { background: var(--primary-light); color: var(--primary); }
+    .calc-key.mem { background: var(--card); color: var(--muted); font-size: 12px; padding: 9px 4px; }
+    .calc-key.eq { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .calc-key.clr { background: var(--red-bg); color: var(--red-text); }
+    .scratch-area { width: 100%; min-height: 220px; padding: 12px; border: 1.5px solid var(--border); border-radius: 14px; font-family: monospace; font-size: 13px; line-height: 1.6; background: var(--scratch-bg); color: var(--text); resize: vertical; }
+
+    /* Bottom Navigation */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 6px 10px; z-index: 30; }
+    .nav-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: var(--muted); cursor: pointer; padding: 4px 12px; border-radius: 12px; }
+    .nav-item.active { color: var(--primary); background: var(--primary-light); }
+    .nav-icon { font-size: 18px; line-height: 1; }
+
+    /* Utility */
+    .row-between { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .mt-8 { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .mb-8 { margin-bottom: 8px; }
+    .text-muted { color: var(--muted); font-size: 13px; }
+    .back-link { display: inline-flex; align-items: center; gap: 4px; color: var(--primary); font-size: 13px; font-weight: 700; background: none; border: none; cursor: pointer; margin-bottom: 12px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat-box { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
+    .stat-val { font-size: 20px; font-weight: 800; color: var(--primary); }
+    .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header class="topbar" id="topbar">
+    <div class="brand">
+      <h1>PROJECT: GAL</h1>
+      <p>Gamifying Accounting Lessons</p>
+    </div>
+    <div class="stats-row">
+      <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle Dark Mode">🌙</button>
+      <span class="pill pill-streak" id="streakBadge">🔥 0</span>
+      <span class="pill pill-xp" id="xpBadge">⚡ 0 XP</span>
+    </div>
+  </header>
+
+  <!-- Main Dynamic Content -->
+  <main class="container" id="app"></main>
+
+  <!-- Floating Calculator & Scratchpad Button -->
+  <button class="tool-fab" id="toolFab" onclick="openToolDrawer()">🧮 Calc / Pad</button>
+
+  <!-- Calculator & Scratchpad Slide-Up Drawer -->
+  <div class="tool-backdrop" id="toolBackdrop" onclick="if(event.target===this) closeToolDrawer()">
+    <div class="tool-sheet">
+      <div class="row-between mb-8">
+        <div style="font-weight:800; font-size:15px;">CPA Study Tools</div>
+        <button class="btn btn-outline btn-sm" onclick="closeToolDrawer()">✕ Close</button>
+      </div>
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tabBtnCalc" onclick="switchToolTab('calc')">🧮 Calculator</button>
+        <button class="tab-btn" id="tabBtnPad" onclick="switchToolTab('pad')">🗒 Scratchpad</button>
+      </div>
+
+      <div id="toolPaneCalc">
+        <div class="calc-display">
+          <div class="calc-tape" id="calcTape"></div>
+          <div class="calc-val" id="calcVal">0</div>
+        </div>
+        <div class="calc-grid" style="margin-bottom:8px;">
+          <button class="calc-key mem" onclick="calcMem('MC')">MC</button>
+          <button class="calc-key mem" onclick="calcMem('MR')" id="btnMR">MR</button>
+          <button class="calc-key mem" onclick="calcMem('M+')">M+</button>
+          <button class="calc-key mem" onclick="calcMem('M-')">M−</button>
+        </div>
+        <div class="calc-grid">
+          <button class="calc-key clr" onclick="calcAction('AC')">AC</button>
+          <button class="calc-key op" onclick="calcAction('DEL')">⌫</button>
+          <button class="calc-key op" onclick="calcAction('%')">%</button>
+          <button class="calc-key op" onclick="calcInput('/')">÷</button>
+          <button class="calc-key" onclick="calcInput('7')">7</button>
+          <button class="calc-key" onclick="calcInput('8')">8</button>
+          <button class="calc-key" onclick="calcInput('9')">9</button>
+          <button class="calc-key op" onclick="calcInput('*')">×</button>
+          <button class="calc-key" onclick="calcInput('4')">4</button>
+          <button class="calc-key" onclick="calcInput('5')">5</button>
+          <button class="calc-key" onclick="calcInput('6')">6</button>
+          <button class="calc-key op" onclick="calcInput('-')">−</button>
+          <button class="calc-key" onclick="calcInput('1')">1</button>
+          <button class="calc-key" onclick="calcInput('2')">2</button>
+          <button class="calc-key" onclick="calcInput('3')">3</button>
+          <button class="calc-key op" onclick="calcInput('+')">+</button>
+          <button class="calc-key" onclick="calcInput('000')">000</button>
+          <button class="calc-key" onclick="calcInput('0')">0</button>
+          <button class="calc-key" onclick="calcInput('.')">.</button>
+          <button class="calc-key eq" onclick="calcEval()">=</button>
+        </div>
+      </div>
+
+      <div id="toolPanePad" style="display:none;">
+        <textarea id="scratchpadText" class="scratch-area" placeholder="Jot down T-accounts, journal entries, or formulas here..." oninput="saveScratchpad()"></textarea>
+        <div class="grid-2 mt-8">
+          <button class="btn btn-outline btn-sm" style="width:100%;" onclick="pasteCalcToPad()">📋 Paste Calc Result</button>
+          <button class="btn btn-danger btn-sm" style="width:100%;" onclick="clearScratchpad()">🗑 Clear Pad</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="nav-item active" onclick="navigate('home')" data-tab="home">
+      <span class="nav-icon">🏠</span><span>Home</span>
+    </button>
+    <button class="nav-item" onclick="navigate('subjects')" data-tab="subjects">
+      <span class="nav-icon">📚</span><span>Subjects</span>
+    </button>
+    <button class="nav-item" onclick="navigate('handouts')" data-tab="handouts">
+      <span class="nav-icon">📝</span><span>Handouts</span>
+    </button>
+    <button class="nav-item" onclick="navigate('progress')" data-tab="progress">
+      <span class="nav-icon">📊</span><span>Progress</span>
+    </button>
+  </nav>
+
+  <script>
+    // ==========================================
+    // 1. BASE CURRICULUM DATA
+    // ==========================================
+    const BASE_SUBJECTS = [
+      {
+        code: "FAR",
+        name: "Financial Accounting and Reporting",
+        modules: [
+          {
+            id: "far-m1",
+            title: "Conceptual Framework & PAS 1",
+            subtitle: "Qualitative characteristics, elements of FS, and presentation",
+            handout: [
+              {
+                title: "1. Objective of Financial Reporting",
+                body: "To provide financial information about the reporting entity that is useful to existing and potential investors, lenders, and other creditors in making decisions about providing resources.",
+                calloutType: "note",
+                calloutText: "Conceptual Framework (2018): The Framework is NOT a PFRS and does not override any specific accounting standard."
+              },
+              {
+                title: "2. Qualitative Characteristics",
+                body: "• Fundamental: Relevance (predictive value, confirmatory value, materiality) and Faithful Representation (complete, neutral, free from error).\n• Enhancing: Comparability, Verifiability, Timeliness, Understandability.\n• Pervasive Constraint: Cost (benefits must justify the cost)."
+              },
+              {
+                title: "3. Current vs. Noncurrent Classification (PAS 1)",
+                body: "• Asset is CURRENT if realized/consumed in the normal operating cycle, held for trading, realized within 12 months, or unrestricted cash.\n• Liability is CURRENT if settled in the normal operating cycle, held for trading, due within 12 months, or no right at reporting date to defer settlement for at least 12 months.\n• Deferred tax assets and liabilities are ALWAYS noncurrent.",
+                calloutType: "note",
+                calloutText: "PAS 1 Rule: Refinancing completed AFTER reporting date is a non-adjusting event (remains Current). Deferred taxes are ALWAYS Noncurrent."
+              },
+              {
+                title: "4. Comprehensive Income & Equity",
+                body: "• OCI NOT reclassified to P/L: Revaluation surplus, remeasurements of defined benefit plans, FVOCI equity investments, own-credit risk on FVPL liabilities.\n• OCI reclassified to P/L: Foreign operation translation differences, cash flow hedges, FVOCI debt investments.",
+                calloutType: "formula",
+                calloutText: "Total Comprehensive Income (TCI) = Profit or Loss + Other Comprehensive Income"
+              }
+            ],
+            flashcards: [
+              { tag: "Framework", front: "What are the 2 Fundamental vs. 4 Enhancing Qualitative Characteristics?", back: "Fundamental: Relevance & Faithful Representation.\nEnhancing: Comparability, Verifiability, Timeliness, Understandability." },
+              { tag: "Framework", front: "What is the ONLY underlying assumption in the 2018 Conceptual Framework?", back: "Going Concern. (If liquidation is intended, a different basis must be used and disclosed.)" },
+              { tag: "PAS 1", front: "How are Deferred Tax Assets and Deferred Tax Liabilities classified?", back: "ALWAYS Noncurrent. PAS 1 prohibits classifying them as current." },
+              { tag: "PAS 1", front: "If a loan is refinanced AFTER the reporting date (before FS authorization), is it Current or Noncurrent?", back: "Current Liability. It is a non-adjusting event because the entity had no right to defer at the reporting date." },
+              { tag: "PAS 1", front: "Which OCI items are NEVER reclassified to Profit or Loss?", back: "Revaluation surplus, defined benefit plan remeasurements, FVOCI equity investments, and own-credit risk changes on FVPL liabilities." },
+              { tag: "Formula", front: "Formula for Total Comprehensive Income (TCI)", back: "TCI = Profit or Loss + Other Comprehensive Income (OCI).\n(Dividends are excluded—they are owner transactions.)" }
+            ],
+            quizzes: {
+              Basic: [
+                { id: "far-m1-b1", q: "Under the Conceptual Framework for Financial Reporting, which are the FUNDAMENTAL qualitative characteristics?", choices: ["Relevance and faithful representation", "Comparability and verifiability", "Understandability and timeliness", "Reliability and consistency"], ans: 0, exp: "The two fundamental qualitative characteristics are Relevance and Faithful Representation." },
+                { id: "far-m1-b2", q: "Which is the ONLY underlying assumption explicitly retained in the revised 2018 Conceptual Framework?", choices: ["Accrual basis", "Going concern", "Monetary unit", "Time period"], ans: 1, exp: "Going concern is the sole underlying assumption in the revised Conceptual Framework." },
+                { id: "far-m1-b3", q: "Under PAS 1, how are Deferred Tax Assets and Deferred Tax Liabilities classified?", choices: ["Current if expected to reverse within 12 months", "Always current", "Always noncurrent", "Depends on the related asset"], ans: 2, exp: "PAS 1 explicitly prohibits classifying deferred tax assets or liabilities as current." },
+                { id: "far-m1-b4", q: "Which of the following is NOT a component of a complete set of financial statements under PAS 1?", choices: ["Statement of Financial Position", "Statement of Changes in Equity", "Notes to Financial Statements", "Management Commentary / Board Report"], ans: 3, exp: "Management commentary is outside the scope of PFRS and is not part of a complete set of FS." }
+              ],
+              Medium: [
+                { id: "far-m1-m1", q: "An entity has a P5,000,000 loan maturing March 31, 2027. On Jan 15, 2027 (before FS authorization), it signed a refinancing agreement extending maturity to 2030. How is it classified on Dec 31, 2026?", choices: ["Noncurrent liability", "Current liability", "Split between current and noncurrent", "Disclosed only"], ans: 1, exp: "Refinancing completed AFTER the reporting date is a non-adjusting event. It remains a Current Liability." },
+                { id: "far-m1-m2", q: "Which of the following OCI items MAY be reclassified subsequently to Profit or Loss?", choices: ["Revaluation surplus on PPE", "Unrealized gain on FVOCI equity securities", "Remeasurement gain on defined benefit plan", "Unrealized gain on FVOCI debt securities"], ans: 3, exp: "Unrealized gains/losses on FVOCI debt instruments are reclassified to P/L upon derecognition." },
+                { id: "far-m1-m3", q: "Entity A breached a loan covenant on Dec 31, 2026. On Dec 28, 2026, the bank granted a 15-month grace period. Classification on Dec 31, 2026?", choices: ["Current liability", "Noncurrent liability", "Current with note disclosure", "Derecognized"], ans: 1, exp: "Because the lender granted a >=12-month grace period ON OR BEFORE the reporting date, it is Noncurrent." },
+                { id: "far-m1-m4", q: "When an entity presents expenses by FUNCTION, what additional disclosure is required by PAS 1?", choices: ["No additional disclosure", "Nature of expenses (depreciation, amortization, employee benefits)", "Operating vs non-operating split", "Extraordinary items"], ans: 1, exp: "PAS 1 requires disclosing the nature of expenses, including depreciation, amortization, and employee benefits." }
+              ],
+              Hard: [
+                { id: "far-m1-h1", q: "Profit = P1,200,000; Revaluation surplus increase = P300,000; Unrealized loss on FVOCI debt = (P80,000); Cash dividends declared = P200,000. What is Total Comprehensive Income?", choices: ["P1,220,000", "P1,420,000", "P1,500,000", "P1,120,000"], ans: 1, exp: "TCI = Profit (1,200,000) + Net OCI (300,000 - 80,000) = P1,420,000. Dividends are excluded." },
+                { id: "far-m1-h2", q: "Beginning Equity = P4,000,000; Profit = P900,000; OCI (net loss) = (P100,000); Share issuance = P500,000; Treasury shares acquired = P150,000; Dividends = P250,000. Ending Equity?", choices: ["P4,900,000", "P5,050,000", "P5,150,000", "P4,750,000"], ans: 0, exp: "4,000,000 + 800,000 (TCI) + 500,000 - 150,000 - 250,000 = P4,900,000." },
+                { id: "far-m1-h3", q: "Cash (includes P100,000 restricted for 2029 bond retirement) = P600,000; Trade Receivables (P50,000 due in 15 months, operating cycle is 18 months) = P400,000; DTA = P120,000. Total Current Assets?", choices: ["P900,000", "P850,000", "P1,020,000", "P950,000"], ans: 0, exp: "Unrestricted Cash (500,000) + Trade Receivables (400,000, within 18-mo cycle) = P900,000. DTA is noncurrent." },
+                { id: "far-m1-h4", q: "Accounts Payable = P300,000; Income Tax Payable = P120,000; DTL = P80,000; 10% Bonds Payable due in 6 months (unconditional right to roll over for 3 years) = P1,000,000. Total Current Liabilities?", choices: ["P420,000", "P500,000", "P1,420,000", "P1,500,000"], ans: 0, exp: "AP (300,000) + Income Tax Payable (120,000) = P420,000. DTL and rolled-over Bonds are noncurrent." }
+              ]
+            }
+          },
+          { id: "far-m2", title: "Cash & Cash Equivalents", subtitle: "Bank reconciliation and proof of cash" },
+          { id: "far-m3", title: "Receivables", subtitle: "Allowance method, notes, and receivable financing" },
+          { id: "far-m4", title: "Inventories (PAS 2)", subtitle: "Cost formulas, LCNRV, and inventory estimation" }
+        ]
+      },
+      { code: "AFAR", name: "Advanced Financial Accounting and Reporting", modules: [
+          { id: "afar-m1", title: "Partnership Accounting", subtitle: "Formation, operations, dissolution, and liquidation" },
+          { id: "afar-m2", title: "Corporate Liquidation", subtitle: "Statement of affairs and realization" },
+          { id: "afar-m3", title: "Business Combinations (PFRS 3)", subtitle: "Goodwill, bargain purchase, and consolidation" }
+        ]
+      },
+      { code: "MAS", name: "Management Advisory Services", modules: [
+          { id: "mas-m1", title: "Cost Behavior & CVP Analysis", subtitle: "Break-even point, margin of safety, sales mix" },
+          { id: "mas-m2", title: "Standard Costing & Variance Analysis", subtitle: "DM, DL, and FOH variances" },
+          { id: "mas-m3", title: "Capital Budgeting", subtitle: "NPV, IRR, Payback, and ARR" }
+        ]
+      },
+      { code: "TAX", name: "Taxation", modules: [
+          { id: "tax-m1", title: "Individual & Corporate Income Tax", subtitle: "CREATE Law rates, gross income, and deductions" },
+          { id: "tax-m2", title: "Transfer Taxes", subtitle: "Estate tax and Donor's tax" },
+          { id: "tax-m3", title: "Value-Added & Percentage Tax", subtitle: "Output/Input VAT and exempt transactions" }
+        ]
+      },
+      { code: "RFBT", name: "Regulatory Framework for Business Transactions", modules: [
+          { id: "rfbt-m1", title: "Obligations and Contracts", subtitle: "Sources, extinguishment, and defective contracts" },
+          { id: "rfbt-m2", title: "Revised Corporation Code", subtitle: "Incorporation, board powers, and stockholders" }
+        ]
+      },
+      { code: "AUD", name: "Auditing", modules: [
+          { id: "aud-m1", title: "Fundamentals of Auditing & PSA", subtitle: "Audit risk model, materiality, and evidence" },
+          { id: "aud-m2", title: "Audit of Cash & Receivables", subtitle: "Substantive procedures and audit adjustments" }
+        ]
+      }
+    ];
+
+    const TIER_XP = { Basic: 10, Medium: 20, Hard: 30 };
+    const STORAGE_KEY = "project_gal_v1_state";
+    const PRESET_HL_COLORS = ["#FEF08A", "#BBF7D0", "#FBCFE8", "#BFDBFE", "#E9D5FF", "#FED7AA"];
+
+    // ==========================================
+    // 2. STATE, THEME & DAILY XP HELPERS
+    // ==========================================
+    function getTodayStr() { return new Date().toISOString().split("T")[0]; }
+
+    function getDefaultState() {
+      const d = new Date(); d.setDate(d.getDate() + 180);
+      return {
+        theme: "light",
+        xp: 0, streak: 0, lastStudyDate: null,
+        dailyXpGoal: 100,
+        dailyXpDate: getTodayStr(),
+        dailyXpEarned: 0,
+        scoreHistory: [],
+        examDate: d.toISOString().split("T")[0],
+        lastVisited: { subjectCode: "FAR", moduleId: "far-m1" },
+        tierScores: {},
+        questionHistory: {},
+        mistakeBank: [],
+        handoutAnnotations: {},
+        activeHighlightColor: "#FEF08A",
+        customHighlightColors: [],
+        scratchpad: "",
+        customData: { modules: {}, questions: {}, handouts: {}, flashcards: {} }
+      };
+    }
+
+    let state = loadState();
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return getDefaultState();
+        const parsed = JSON.parse(raw);
+        const merged = {
+          ...getDefaultState(),
+          ...parsed,
+          theme: parsed.theme === "dark" ? "dark" : "light",
+          dailyXpGoal: Number(parsed.dailyXpGoal) > 0 ? Number(parsed.dailyXpGoal) : 100,
+          scoreHistory: Array.isArray(parsed.scoreHistory) ? parsed.scoreHistory : [],
+          mistakeBank: Array.isArray(parsed.mistakeBank) ? parsed.mistakeBank : [],
+          handoutAnnotations: parsed.handoutAnnotations || {},
+          activeHighlightColor: parsed.activeHighlightColor || "#FEF08A",
+          customHighlightColors: Array.isArray(parsed.customHighlightColors) ? parsed.customHighlightColors : [],
+          scratchpad: parsed.scratchpad || "",
+          customData: { modules: {}, questions: {}, handouts: {}, flashcards: {}, ...(parsed.customData || {}) }
+        };
+        if (merged.dailyXpDate !== getTodayStr()) {
+          merged.dailyXpDate = getTodayStr();
+          merged.dailyXpEarned = 0;
+        }
+        return merged;
+      } catch (e) { return getDefaultState(); }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      updateHeader();
+    }
+
+    function awardXp(amount) {
+      const today = getTodayStr();
+      if (state.dailyXpDate !== today) {
+        state.dailyXpDate = today;
+        state.dailyXpEarned = 0;
+      }
+      state.xp += amount;
+      state.dailyXpEarned += amount;
+    }
+
+    function logScoreAttempt(subject, pct, mode) {
+      const now = new Date();
+      const label = `${now.getMonth() + 1}/${now.getDate()}`;
+      state.scoreHistory.push({ date: label, subject, pct, mode });
+      if (state.scoreHistory.length > 50) state.scoreHistory.shift();
+    }
+
+    function applyTheme() {
+      const isDark = state.theme === "dark";
+      document.body.classList.toggle("dark", isDark);
+      const btn = document.getElementById("themeBtn");
+      if (btn) btn.textContent = isDark ? "☀️" : "🌙";
+    }
+    function toggleTheme() { state.theme = state.theme === "dark" ? "light" : "dark"; applyTheme(); saveState(); }
+
+    function addToMistakeBank(qObj, subjectCode) {
+      if (!state.mistakeBank.some(m => m.id === qObj.id)) {
+        state.mistakeBank.push({ id: qObj.id, subjectCode, q: qObj.q, choices: qObj.choices, ans: qObj.ans, exp: qObj.exp });
+      }
+    }
+    function removeFromMistakeBank(qId) { state.mistakeBank = state.mistakeBank.filter(m => m.id !== qId); }
+
+    function getAllSubjects() {
+      return BASE_SUBJECTS.map(baseSubj => {
+        const customMods = state.customData.modules[baseSubj.code] || [];
+        const mergedMods = baseSubj.modules.map(m => mergeModule(m));
+        customMods.forEach(cm => {
+          if (!mergedMods.some(m => m.id === cm.id)) mergedMods.push(mergeModule(cm));
+        });
+        return { ...baseSubj, modules: mergedMods };
+      });
+    }
+
+    function mergeModule(mod) {
+      const cq = state.customData.questions[mod.id];
+      const ch = state.customData.handouts[mod.id];
+      const cf = state.customData.flashcards[mod.id];
+      const mergedQuizzes = mod.quizzes ? {
+        Basic: [...(mod.quizzes.Basic || []), ...(cq?.Basic || [])],
+        Medium: [...(mod.quizzes.Medium || []), ...(cq?.Medium || [])],
+        Hard: [...(mod.quizzes.Hard || []), ...(cq?.Hard || [])]
+      } : (cq ? { Basic: cq.Basic || [], Medium: cq.Medium || [], Hard: cq.Hard || [] } : null);
+      const hasAnyQ = mergedQuizzes && (mergedQuizzes.Basic.length + mergedQuizzes.Medium.length + mergedQuizzes.Hard.length > 0);
+      const mergedHandout = [...(mod.handout || []), ...(ch || [])];
+      const mergedFlashcards = [...(mod.flashcards || []), ...(cf || [])];
+      return {
+        ...mod,
+        quizzes: hasAnyQ ? mergedQuizzes : null,
+        handout: mergedHandout.length > 0 ? mergedHandout : null,
+        flashcards: mergedFlashcards.length > 0 ? mergedFlashcards : null
+      };
+    }
+
+    function updateHeader() {
+      document.getElementById("streakBadge").textContent = `🔥 ${state.streak}`;
+      document.getElementById("xpBadge").textContent = `⚡ ${state.xp} XP`;
+    }
+
+    function updateStreak() {
+      const today = getTodayStr();
+      if (state.lastStudyDate === today) return;
+      const y = new Date(); y.setDate(y.getDate() - 1);
+      state.streak = (state.lastStudyDate === y.toISOString().split("T")[0]) ? state.streak + 1 : 1;
+      state.lastStudyDate = today;
+    }
+
+    // ==========================================
+    // 3. ANALYTICS & SVG CHART GENERATOR
+    // ==========================================
+    function getSubjectAccuracy(subjCode) {
+      const subj = getAllSubjects().find(s => s.code === subjCode);
+      if (!subj) return null;
+      let totalCorrect = 0, totalAttempted = 0;
+      subj.modules.forEach(m => {
+        ["Basic", "Medium", "Hard"].forEach(tier => {
+          const rec = state.tierScores[`${m.id}_${tier}`];
+          if (rec) { totalCorrect += rec.correct; totalAttempted += rec.total; }
+        });
+      });
+      return totalAttempted === 0 ? null : Math.round((totalCorrect / totalAttempted) * 100);
+    }
+
+    function getReadinessScore() {
+      const scores = getAllSubjects().map(s => getSubjectAccuracy(s.code)).filter(v => v !== null);
+      return scores.length === 0 ? null : Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    }
+
+    function getStatusBadge(pct) {
+      if (pct === null) return `<span class="badge badge-neutral">No attempts</span>`;
+      if (pct >= 75) return `<span class="badge badge-pass">${pct}% · Passing</span>`;
+      if (pct >= 65) return `<span class="badge badge-warn">${pct}% · Borderline</span>`;
+      return `<span class="badge badge-risk">${pct}% · At Risk</span>`;
+    }
+
+    function isTierUnlocked(moduleId, tier) {
+      if (tier === "Basic") return true;
+      if (tier === "Medium") return (state.tierScores[`${moduleId}_Basic`]?.bestPct || 0) >= 75;
+      if (tier === "Hard") return (state.tierScores[`${moduleId}_Medium`]?.bestPct || 0) >= 75;
+      return false;
+    }
+
+    function getDaysUntilExam() {
+      const today = new Date(); today.setHours(0,0,0,0);
+      const target = new Date(state.examDate + "T00:00:00");
+      return Math.max(0, Math.ceil((target - today) / (1000 * 60 * 60 * 24)));
+    }
+
+    let trendFilter = "Overall";
+
+    function buildScoreTrendSvg(filterCode) {
+      const filtered = state.scoreHistory.filter(h => filterCode === "Overall" || h.subject === filterCode).slice(-10);
+      if (filtered.length === 0) {
+        return `<div class="text-muted" style="text-align:center; padding:18px 8px;">Complete a Quiz or Mock Exam to plot your score trend here.</div>`;
+      }
+
+      const w = 320, h = 150, padL = 32, padR = 16, padT = 18, padB = 26;
+      const plotW = w - padL - padR, plotH = h - padT - padB;
+      const yFor = pct => padT + plotH - (pct / 100) * plotH;
+      const xFor = i => filtered.length === 1 ? padL + plotW / 2 : padL + (i / (filtered.length - 1)) * plotW;
+
+      const pts = filtered.map((d, i) => ({ x: xFor(i), y: yFor(d.pct), ...d }));
+      const polyline = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+      const passY = yFor(75).toFixed(1);
+
+      const gridLines = [0, 50, 100].map(val => {
+        const y = yFor(val).toFixed(1);
+        return `
+          <line x1="${padL}" y1="${y}" x2="${w - padR}" y2="${y}" stroke="var(--border)" stroke-width="1" />
+          <text x="${padL - 6}" y="${Number(y) + 3}" text-anchor="end" font-size="9" fill="var(--muted)">${val}%</text>`;
+      }).join("");
+
+      const dotsHtml = pts.map(p => `
+        <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="${p.pct >= 75 ? '#16A34A' : 'var(--primary)'}" stroke="var(--card)" stroke-width="1.5" />
+        <text x="${p.x.toFixed(1)}" y="${(p.y - 7).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="700" fill="var(--text)">${p.pct}%</text>
+        <text x="${p.x.toFixed(1)}" y="${h - 6}" text-anchor="middle" font-size="8.5" fill="var(--muted)">${p.date}</text>
+      `).join("");
+
+      return `
+        <div class="chart-wrap">
+          <svg class="chart-svg" viewBox="0 0 ${w} ${h}">
+            ${gridLines}
+            <line x1="${padL}" y1="${passY}" x2="${w - padR}" y2="${passY}" stroke="#16A34A" stroke-width="1.2" stroke-dasharray="4 3" />
+            <text x="${w - padR}" y="${Number(passY) - 4}" text-anchor="end" font-size="8.5" font-weight="700" fill="#16A34A">75% Pass</text>
+            ${pts.length > 1 ? `<polyline fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${polyline}" />` : ""}
+            ${dotsHtml}
+          </svg>
+        </div>`;
+    }
+
+    // ==========================================
+    // 4. ROUTER
+    // ==========================================
+    let activeQuiz = null, activeMock = null, mockTimerId = null, activeDeck = null;
+    let importTab = "questions", importPreviewData = null;
+    let handoutsSubTab = "list", vaultSubjFilter = "ALL", vaultTypeFilter = "ALL";
+
+    function stopMockTimer() { if (mockTimerId) { clearInterval(mockTimerId); mockTimerId = null; } }
+
+    function navigate(tab, params = {}) {
+      if (tab !== "mockExam") stopMockTimer();
+      document.querySelectorAll(".nav-item").forEach(btn => {
+        const navKey = (tab === "vault") ? "handouts" : tab;
+        btn.classList.toggle("active", btn.dataset.tab === navKey);
+      });
+      const hideChrome = (tab === "quiz" || tab === "flashcards" || tab === "mockExam");
+      document.getElementById("topbar").style.display = hideChrome ? "none" : "flex";
+      document.getElementById("bottomNav").style.display = hideChrome ? "none" : "flex";
+      document.getElementById("toolFab").style.display = (tab === "quiz" || tab === "mockExam") ? "inline-flex" : "none";
+      closeToolDrawer();
+      window.scrollTo(0, 0);
+
+      if (tab === "home") renderHome();
+      else if (tab === "subjects") renderSubjects();
+      else if (tab === "subjectDetail") renderSubjectDetail(params.code);
+      else if (tab === "moduleDetail") renderModuleDetail(params.code, params.moduleId);
+      else if (tab === "handouts") { handoutsSubTab = params.subTab || "list"; renderHandoutsScreen(); }
+      else if (tab === "handoutView") renderHandoutView(params.code, params.moduleId);
+      else if (tab === "search") renderSearchScreen(params.query || "");
+      else if (tab === "quiz") renderQuizQuestion();
+      else if (tab === "mockExam") renderMockExamQuestion();
+      else if (tab === "flashcards") renderFlashcard();
+      else if (tab === "progress") renderProgress();
+      else if (tab === "manage") renderManageContent();
+    }
+
+    // --- HOME ---
+    function renderHome() {
+      const subjects = getAllSubjects();
+      const days = getDaysUntilExam();
+      const lastSubj = subjects.find(s => s.code === state.lastVisited.subjectCode) || subjects[0];
+      const lastMod = lastSubj.modules.find(m => m.id === state.lastVisited.moduleId) || lastSubj.modules[0];
+
+      if (state.dailyXpDate !== getTodayStr()) { state.dailyXpDate = getTodayStr(); state.dailyXpEarned = 0; saveState(); }
+      const goalPct = Math.min(100, Math.round((state.dailyXpEarned / state.dailyXpGoal) * 100));
+      const circum = 2 * Math.PI * 24;
+      const offset = circum - (goalPct / 100) * circum;
+
+      let subjHtml = subjects.map(s => {
+        const acc = getSubjectAccuracy(s.code);
+        return `
+          <div class="card card-clickable" onclick="navigate('subjectDetail', {code: '${s.code}'})">
+            <div class="subj-row">
+              <div class="subj-icon">${s.code}</div>
+              <div class="subj-info">
+                <div class="row-between">
+                  <div class="subj-title">${s.name}</div>
+                  ${getStatusBadge(acc)}
+                </div>
+                <div class="progress-track"><div class="progress-fill" style="width:${acc || 0}%"></div></div>
+              </div>
+            </div>
+          </div>`;
+      }).join("");
+
+      document.getElementById("app").innerHTML = `
+        <div class="card" style="background: linear-gradient(135deg, #5B21B6, #7C3AED); color: #fff; border: none;">
+          <div class="row-between">
+            <div>
+              <div style="font-size:11px; opacity:0.85; font-weight:700; letter-spacing:0.6px;">CPALE COUNTDOWN</div>
+              <div style="font-size:28px; font-weight:800; margin-top:2px;">${days} Days Left</div>
+              <div style="font-size:12px; opacity:0.85;">Target Date: ${state.examDate}</div>
+            </div>
+            <button class="btn btn-sm" style="background:rgba(255,255,255,0.2); color:#fff;" onclick="editExamDate()">Edit Date</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row-between">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div class="xp-ring-wrap">
+                <svg viewBox="0 0 60 60">
+                  <circle cx="30" cy="30" r="24" fill="none" stroke="var(--primary-light)" stroke-width="6" />
+                  <circle cx="30" cy="30" r="24" fill="none" stroke="${goalPct >= 100 ? '#16A34A' : 'var(--primary)'}" stroke-width="6"
+                    stroke-linecap="round" stroke-dasharray="${circum.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}" />
+                </svg>
+                <div class="xp-ring-text">${goalPct}%</div>
+              </div>
+              <div>
+                <div class="section-label" style="margin-bottom:2px;">Daily XP Goal</div>
+                <div style="font-weight:800; font-size:16px;">${state.dailyXpEarned} / ${state.dailyXpGoal} XP</div>
+                <div class="text-muted" style="font-size:12px;">${goalPct >= 100 ? "🎉 Daily target hit!" : (state.dailyXpGoal - state.dailyXpEarned) + " XP left today"}</div>
+              </div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="editDailyGoal()">Set Goal</button>
+          </div>
+        </div>
+
+        <div class="grid-2 mb-8">
+          <div class="card card-clickable" style="margin-bottom:0;" onclick="startMockExam('ALL')">
+            <div style="font-size:20px; margin-bottom:4px;">⏱</div>
+            <div style="font-weight:800; font-size:14px;">Mock Exam</div>
+            <div class="text-muted" style="font-size:12px;">Timed board sim</div>
+          </div>
+          <div class="card card-clickable" style="margin-bottom:0;" onclick="${state.mistakeBank.length > 0 ? 'startMistakeDrill()' : "navigate('progress')"}">
+            <div style="font-size:20px; margin-bottom:4px;">🎯</div>
+            <div style="font-weight:800; font-size:14px;">Mistake Bank</div>
+            <div class="text-muted" style="font-size:12px;">${state.mistakeBank.length} to master</div>
+          </div>
+          <div class="card card-clickable" style="margin-bottom:0;" onclick="navigate('handouts', {subTab:'vault'})">
+            <div style="font-size:20px; margin-bottom:4px;">📐</div>
+            <div style="font-weight:800; font-size:14px;">Formula Vault</div>
+            <div class="text-muted" style="font-size:12px;">Rules & formulas</div>
+          </div>
+          <div class="card card-clickable" style="margin-bottom:0;" onclick="navigate('search')">
+            <div style="font-size:20px; margin-bottom:4px;">🔍</div>
+            <div style="font-weight:800; font-size:14px;">Quick Search</div>
+            <div class="text-muted" style="font-size:12px;">Find any topic</div>
+          </div>
+        </div>
+
+        <div class="card card-clickable" onclick="navigate('moduleDetail', {code: '${lastSubj.code}', moduleId: '${lastMod.id}'})">
+          <div class="section-label">Continue Where You Left Off</div>
+          <div class="row-between">
+            <div>
+              <div style="font-weight:800; font-size:15px;">${lastSubj.code} · ${lastMod.title}</div>
+              <div class="text-muted">${lastMod.subtitle}</div>
+            </div>
+            <span style="font-size:18px; color:var(--primary); font-weight:800;">›</span>
+          </div>
+        </div>
+
+        <div class="section-label mt-12">Course Progress</div>
+        ${subjHtml}
+      `;
+    }
+
+    function editExamDate() {
+      const newDate = prompt("Enter your target CPALE date (YYYY-MM-DD):", state.examDate);
+      if (newDate && /^\d{4}-\d{2}-\d{2}$/.test(newDate)) { state.examDate = newDate; saveState(); renderHome(); }
+    }
+    function editDailyGoal() {
+      const val = prompt("Set your Daily XP Goal (e.g., 50, 100, 200):", state.dailyXpGoal);
+      const num = parseInt(val, 10);
+      if (!isNaN(num) && num >= 10) { state.dailyXpGoal = num; saveState(); renderHome(); }
+    }
+
+    // ==========================================
+    // 5. GLOBAL SEARCH
+    // ==========================================
+    function renderSearchScreen(initialQuery) {
+      document.getElementById("app").innerHTML = `
+        <button class="back-link" onclick="navigate('home')">‹ Back</button>
+        <div class="section-label">Global Search</div>
+        <div class="page-title" style="margin-bottom:10px;">Search Everything</div>
+        <input type="text" id="globalSearchInput" class="search-input" placeholder="Search PAS 1, FVOCI, cash, formulas..." value="${escapeHtml(initialQuery)}" oninput="runGlobalSearch(this.value)" />
+        <div id="searchResultsBox" class="mt-12"></div>`;
+      const input = document.getElementById("globalSearchInput");
+      input.focus();
+      runGlobalSearch(initialQuery);
+    }
+
+    function runGlobalSearch(rawQuery) {
+      const box = document.getElementById("searchResultsBox");
+      const q = rawQuery.trim().toLowerCase();
+      if (!q) { box.innerHTML = `<div class="card text-muted" style="text-align:center;">Type a keyword to search across all Handouts, Flashcards, and Quiz Questions.</div>`; return; }
+
+      const handoutHits = [], fcHits = [], quizHits = [];
+      getAllSubjects().forEach(s => {
+        s.modules.forEach(m => {
+          (m.handout || []).forEach(sec => {
+            if (`${m.title} ${sec.title} ${sec.body} ${sec.calloutText || ""}`.toLowerCase().includes(q))
+              handoutHits.push({ code: s.code, modId: m.id, modTitle: m.title, title: sec.title, snippet: sec.body.slice(0, 110) });
+          });
+          (m.flashcards || []).forEach(fc => {
+            if (`${fc.tag || ""} ${fc.front} ${fc.back}`.toLowerCase().includes(q))
+              fcHits.push({ code: s.code, modId: m.id, modTitle: m.title, front: fc.front, back: fc.back, tag: fc.tag });
+          });
+          if (m.quizzes) {
+            ["Basic", "Medium", "Hard"].forEach(tier => {
+              (m.quizzes[tier] || []).forEach(item => {
+                if (`${item.q} ${item.choices.join(" ")} ${item.exp}`.toLowerCase().includes(q))
+                  quizHits.push({ code: s.code, modId: m.id, modTitle: m.title, tier, q: item.q, ansText: item.choices[item.ans] });
+              });
+            });
+          }
+        });
+      });
+
+      const total = handoutHits.length + fcHits.length + quizHits.length;
+      if (total === 0) { box.innerHTML = `<div class="card text-muted" style="text-align:center;">No matches found for "<strong>${escapeHtml(rawQuery)}</strong>".</div>`; return; }
+
+      let html = `<div class="text-muted mb-8">Found <strong>${total}</strong> match(es)</div>`;
+      if (handoutHits.length) {
+        html += `<div class="section-label mt-8">📝 Handouts (${handoutHits.length})</div>` + handoutHits.map(h => `
+          <div class="card card-clickable" onclick="navigate('handoutView', {code:'${h.code}', moduleId:'${h.modId}'})">
+            <div class="row-between mb-8"><span class="badge badge-purple">${h.code} · ${h.modTitle}</span><span style="color:var(--primary); font-weight:800;">›</span></div>
+            <div style="font-weight:700; font-size:14px;">${h.title}</div>
+            <div class="text-muted" style="font-size:12.5px;">${escapeHtml(h.snippet)}...</div>
+          </div>`).join("");
+      }
+      if (fcHits.length) {
+        html += `<div class="section-label mt-12">🃏 Flashcards (${fcHits.length})</div>` + fcHits.map(f => `
+          <div class="card card-clickable" onclick="startFlashcards('${f.code}', '${f.modId}')">
+            <div class="row-between mb-8"><span class="badge badge-purple">${f.code} · ${f.tag || "Card"}</span><span style="color:var(--primary); font-size:12px; font-weight:700;">Open Deck ›</span></div>
+            <div style="font-weight:700; font-size:13.5px;">${escapeHtml(f.front)}</div>
+            <div class="text-muted" style="font-size:12.5px; margin-top:4px;">${escapeHtml(f.back)}</div>
+          </div>`).join("");
+      }
+      if (quizHits.length) {
+        html += `<div class="section-label mt-12">❓ Quiz Questions (${quizHits.length})</div>` + quizHits.map(qz => `
+          <div class="card card-clickable" onclick="navigate('moduleDetail', {code:'${qz.code}', moduleId:'${qz.modId}'})">
+            <div class="row-between mb-8"><span class="badge badge-purple">${qz.code} · ${qz.tier}</span><span style="color:var(--primary); font-size:12px; font-weight:700;">Go to Module ›</span></div>
+            <div style="font-weight:700; font-size:13.5px;">${escapeHtml(qz.q)}</div>
+            <div style="color:var(--green-text); font-size:12px; font-weight:700; margin-top:4px;">Answer: ${escapeHtml(qz.ansText)}</div>
+          </div>`).join("");
+      }
+      box.innerHTML = html;
+    }
+
+    // --- SUBJECTS ---
+    function renderSubjects() {
+      let html = getAllSubjects().map(s => `
+        <div class="card card-clickable" onclick="navigate('subjectDetail', {code: '${s.code}'})">
+          <div class="subj-row">
+            <div class="subj-icon">${s.code}</div>
+            <div class="subj-info"><div class="subj-title">${s.name}</div><div class="subj-meta">${s.modules.length} modules</div></div>
+            ${getStatusBadge(getSubjectAccuracy(s.code))}
+          </div>
+        </div>`).join("");
+      document.getElementById("app").innerHTML = `
+        <div class="row-between">
+          <div><div class="section-label">CPALE Review</div><div class="page-title" style="margin-bottom:10px;">All Subjects</div></div>
+          <button class="btn btn-outline btn-sm" onclick="navigate('search')">🔍 Search</button>
+        </div>${html}`;
+    }
+
+    function renderSubjectDetail(code) {
+      const subj = getAllSubjects().find(s => s.code === code);
+      let modsHtml = subj.modules.map((m, idx) => {
+        const playable = !!(m.quizzes || m.handout || m.flashcards);
+        return `
+          <div class="card ${playable ? 'card-clickable' : ''}" ${playable ? `onclick="navigate('moduleDetail', {code:'${code}', moduleId:'${m.id}'})"` : ''}>
+            <div class="row-between">
+              <div style="min-width:0;"><div style="font-weight:700; font-size:15px;">${idx + 1}. ${m.title}</div><div class="text-muted">${m.subtitle || "Custom module"}</div></div>
+              ${playable ? '<span class="badge badge-purple">Playable</span>' : '<span class="badge badge-neutral">Coming soon</span>'}
+            </div>
+          </div>`;
+      }).join("");
+      document.getElementById("app").innerHTML = `
+        <button class="back-link" onclick="navigate('subjects')">‹ All Subjects</button>
+        <div class="section-label">${subj.code}</div><div class="page-title">${subj.name}</div>
+        <button class="btn btn-outline mb-8" onclick="startMockExam('${code}')">⏱ Start Timed ${code} Mock Exam</button>${modsHtml}`;
+    }
+
+    function renderModuleDetail(code, moduleId) {
+      const subj = getAllSubjects().find(s => s.code === code);
+      const mod = subj.modules.find(m => m.id === moduleId);
+      state.lastVisited = { subjectCode: code, moduleId: moduleId }; saveState();
+
+      const fcCount = mod.flashcards?.length || 0;
+      const tiers = [
+        { name: "Basic", desc: "Conceptual & Theory MCQs", xp: 10 },
+        { name: "Medium", desc: "Application & Journal Entries", xp: 20 },
+        { name: "Hard", desc: "Board-Level Computations", xp: 30 }
+      ];
+      let tiersHtml = tiers.map((t, idx) => {
+        const qList = mod.quizzes?.[t.name] || [];
+        const unlocked = isTierUnlocked(mod.id, t.name);
+        const rec = state.tierScores[`${mod.id}_${t.name}`];
+        return `
+          <div class="card">
+            <div class="row-between mb-8">
+              <div><div style="font-weight:800; font-size:15px;">${unlocked ? (idx + 1) + "." : "🔒"} ${t.name}</div><div class="text-muted">${t.desc} · ${qList.length} questions</div></div>
+              <span class="badge badge-purple">+${t.xp} XP</span>
+            </div>
+            ${rec ? `<div class="mb-8">${getStatusBadge(rec.bestPct)} <span class="text-muted">Best: ${rec.correct}/${rec.total}</span></div>` : ""}
+            ${qList.length === 0 ? `<button class="btn btn-disabled" disabled>No questions added yet</button>`
+              : (unlocked ? `<button class="btn btn-primary" onclick="startQuiz('${code}', '${mod.id}', '${t.name}')">▶ Start ${t.name} Quiz</button>`
+                          : `<button class="btn btn-disabled" disabled>Score 75% in previous tier to unlock</button>`)}
+          </div>`;
+      }).join("");
+
+      document.getElementById("app").innerHTML = `
+        <button class="back-link" onclick="navigate('subjectDetail', {code:'${code}'})">‹ ${code} Modules</button>
+        <div class="section-label">${code} · Module</div><div class="page-title">${mod.title}</div>
+        <div class="card ${mod.handout ? 'card-clickable' : ''}" ${mod.handout ? `onclick="navigate('handoutView', {code:'${code}', moduleId:'${mod.id}'})"` : ''}>
+          <div class="row-between">
+            <div><div style="font-weight:700;">📝 Read & Annotate Handout</div><div class="text-muted">${mod.handout ? mod.handout.length + " sections · Custom highlighter & notes" : "No handout added yet"}</div></div>
+            ${mod.handout ? '<span style="color:var(--primary); font-weight:700; font-size:13px;">Open ›</span>' : ''}
+          </div>
+        </div>
+        <div class="card ${fcCount > 0 ? 'card-clickable' : ''}" ${fcCount > 0 ? `onclick="startFlashcards('${code}', '${mod.id}')"` : ''}>
+          <div class="row-between">
+            <div><div style="font-weight:700;">🃏 Review Flashcards</div><div class="text-muted">${fcCount > 0 ? fcCount + " cards · Quick active recall" : "No flashcards yet"}</div></div>
+            ${fcCount > 0 ? '<span style="color:var(--primary); font-weight:700; font-size:13px;">Open ›</span>' : ''}
+          </div>
+        </div>${tiersHtml}`;
+    }
+
+    // ==========================================
+    // 6. HANDOUTS & FORMULA VAULT
+    // ==========================================
+    function renderHandoutsScreen() {
+      let bodyHtml = "";
+      if (handoutsSubTab === "list") {
+        bodyHtml = getAllSubjects().map(s => {
+          let mods = s.modules.map(m => `
+            <div class="card ${m.handout ? 'card-clickable' : ''}" ${m.handout ? `onclick="navigate('handoutView', {code:'${s.code}', moduleId:'${m.id}'})"` : ''}>
+              <div class="row-between">
+                <div><div style="font-weight:700; font-size:14px;">${m.title}</div><div class="text-muted">${m.handout ? "Ready to read & annotate" : "Coming soon"}</div></div>
+                ${m.handout ? '<span style="color:var(--primary); font-weight:800;">›</span>' : ''}
+              </div>
+            </div>`).join("");
+          return `<div class="section-label mt-12">${s.code} · ${s.name}</div>${mods}`;
+        }).join("");
+      } else {
+        const allItems = [];
+        getAllSubjects().forEach(s => s.modules.forEach(m => (m.handout || []).forEach(sec => {
+          if (sec.calloutText && (sec.calloutType === "formula" || sec.calloutType === "note"))
+            allItems.push({ code: s.code, modId: m.id, modTitle: m.title, secTitle: sec.title, type: sec.calloutType, text: sec.calloutText });
+        })));
+        const filtered = allItems.filter(it => (vaultSubjFilter === "ALL" || it.code === vaultSubjFilter) && (vaultTypeFilter === "ALL" || it.type === vaultTypeFilter));
+        const subjChips = ["ALL", "FAR", "AFAR", "MAS", "TAX", "RFBT", "AUD"].map(c => `<button class="chip-btn ${vaultSubjFilter === c ? 'active' : ''}" onclick="setVaultFilter('subj','${c}')">${c}</button>`).join("");
+        const typeChips = [{ k: "ALL", lbl: "All Items" }, { k: "formula", lbl: "📐 Formulas" }, { k: "note", lbl: "📌 Key Standards" }]
+          .map(t => `<button class="chip-btn ${vaultTypeFilter === t.k ? 'active' : ''}" onclick="setVaultFilter('type','${t.k}')">${t.lbl}</button>`).join("");
+        const cardsHtml = filtered.length === 0
+          ? `<div class="card text-muted" style="text-align:center;">No formulas or standards in this filter yet.</div>`
+          : filtered.map(it => `
+              <div class="card card-clickable" onclick="navigate('handoutView', {code:'${it.code}', moduleId:'${it.modId}'})">
+                <div class="row-between mb-8">
+                  <span class="badge badge-purple">${it.code} · ${it.modTitle}</span>
+                  <span class="badge ${it.type === 'formula' ? 'badge-pass' : 'badge-warn'}">${it.type === 'formula' ? '📐 Formula' : '📌 Standard'}</span>
+                </div>
+                <div style="font-size:12px; font-weight:700; color:var(--muted); margin-bottom:4px;">${it.secTitle}</div>
+                <div class="callout ${it.type === 'formula' ? 'callout-formula' : 'callout-note'}" style="margin:0;">${escapeHtml(it.text)}</div>
+              </div>`).join("");
+        bodyHtml = `<div class="chip-strip">${subjChips}</div><div class="chip-strip">${typeChips}</div>${cardsHtml}`;
+      }
+
+      document.getElementById("app").innerHTML = `
+        <div class="row-between">
+          <div><div class="section-label">Study Notes</div><div class="page-title" style="margin-bottom:10px;">${handoutsSubTab === 'vault' ? 'Formula Vault' : 'Handouts'}</div></div>
+          <button class="btn btn-outline btn-sm" onclick="navigate('search')">🔍 Search</button>
+        </div>
+        <div class="tab-bar">
+          <button class="tab-btn ${handoutsSubTab === 'list' ? 'active' : ''}" onclick="switchHandoutsSubTab('list')">📝 All Handouts</button>
+          <button class="tab-btn ${handoutsSubTab === 'vault' ? 'active' : ''}" onclick="switchHandoutsSubTab('vault')">📐 Formula Vault</button>
+        </div>${bodyHtml}`;
+    }
+    function switchHandoutsSubTab(tab) { handoutsSubTab = tab; renderHandoutsScreen(); }
+    function setVaultFilter(kind, val) { if (kind === "subj") vaultSubjFilter = val; else vaultTypeFilter = val; renderHandoutsScreen(); }
+
+    // ==========================================
+    // 7. TIMED MOCK EXAM ENGINE
+    // ==========================================
+    function startMockExam(scopeCode) {
+      const subjects = getAllSubjects();
+      const targetSubjs = scopeCode === "ALL" ? subjects : subjects.filter(s => s.code === scopeCode);
+      let pool = [];
+      targetSubjs.forEach(s => s.modules.forEach(m => {
+        if (m.quizzes) ["Basic", "Medium", "Hard"].forEach(tier => (m.quizzes[tier] || []).forEach(q => pool.push({ ...q, subjectCode: s.code, tier })));
+      }));
+      if (pool.length === 0) { alert(`No questions available yet for ${scopeCode}.`); return; }
+      pool.sort(() => Math.random() - 0.5);
+      const selectedPool = pool.slice(0, Math.min(20, pool.length));
+      activeMock = { scopeCode, questions: selectedPool, answers: new Array(selectedPool.length).fill(null), flags: new Array(selectedPool.length).fill(false), index: 0, secondsLeft: selectedPool.length * 90, submitted: false };
+
+      stopMockTimer();
+      mockTimerId = setInterval(() => {
+        if (!activeMock || activeMock.submitted) return;
+        activeMock.secondsLeft--;
+        const timerEl = document.getElementById("mockTimerDisplay");
+        if (timerEl) timerEl.textContent = formatTime(activeMock.secondsLeft);
+        if (activeMock.secondsLeft <= 0) { stopMockTimer(); alert("Time is up! Submitting your Mock Exam."); submitMockExam(true); }
+      }, 1000);
+      navigate("mockExam");
+    }
+
+    function formatTime(sec) { return `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`; }
+
+    function renderMockExamQuestion() {
+      const qObj = activeMock.questions[activeMock.index], total = activeMock.questions.length, letters = ["A", "B", "C", "D"];
+      const currentAns = activeMock.answers[activeMock.index], isFlagged = activeMock.flags[activeMock.index];
+      let pillsHtml = activeMock.questions.map((_, i) => {
+        let cls = "q-pill";
+        if (i === activeMock.index) cls += " current";
+        else if (activeMock.answers[i] !== null) cls += " answered";
+        if (activeMock.flags[i]) cls += " flagged";
+        return `<button class="${cls}" onclick="jumpMockQuestion(${i})">${i + 1}</button>`;
+      }).join("");
+      let choicesHtml = qObj.choices.map((c, idx) => `
+        <button class="choice-btn ${currentAns === idx ? 'choice-selected' : ''}" onclick="selectMockChoice(${idx})">
+          <span class="choice-letter">${letters[idx]}</span><span>${c}</span>
+        </button>`).join("");
+      const answeredCount = activeMock.answers.filter(a => a !== null).length;
+
+      document.getElementById("app").innerHTML = `
+        <div class="row-between mb-8">
+          <button class="back-link" style="margin:0;" onclick="confirmExitMock()">✕ Exit</button>
+          <span class="badge badge-risk" id="mockTimerDisplay">⏱ ${formatTime(activeMock.secondsLeft)}</span>
+          <button class="btn btn-outline btn-sm" onclick="toggleMockFlag()">${isFlagged ? "🚩 Flagged" : "🏳 Flag"}</button>
+        </div>
+        <div class="q-nav-strip">${pillsHtml}</div>
+        <div class="row-between mb-8"><span class="badge badge-purple">${qObj.subjectCode} · ${qObj.tier}</span><span class="text-muted">Question ${activeMock.index + 1} of ${total}</span></div>
+        <div style="font-size:15.5px; font-weight:700; margin-bottom:16px;">${qObj.q}</div>
+        ${choicesHtml}
+        <div class="grid-2 mt-12">
+          <button class="btn btn-outline" onclick="jumpMockQuestion(${activeMock.index - 1})" ${activeMock.index === 0 ? "disabled" : ""}>‹ Prev</button>
+          ${activeMock.index + 1 < total ? `<button class="btn btn-primary" onclick="jumpMockQuestion(${activeMock.index + 1})">Next ›</button>`
+                                         : `<button class="btn btn-success" onclick="submitMockExam(false)">✓ Submit (${answeredCount}/${total})</button>`}
+        </div>
+        ${activeMock.index + 1 < total ? `<button class="btn btn-outline mt-8" onclick="submitMockExam(false)">Submit Exam Early (${answeredCount}/${total} answered)</button>` : ""}`;
+    }
+
+    function selectMockChoice(idx) { activeMock.answers[activeMock.index] = idx; renderMockExamQuestion(); }
+    function toggleMockFlag() { activeMock.flags[activeMock.index] = !activeMock.flags[activeMock.index]; renderMockExamQuestion(); }
+    function jumpMockQuestion(i) { if (i >= 0 && i < activeMock.questions.length) { activeMock.index = i; renderMockExamQuestion(); } }
+    function confirmExitMock() { if (confirm("Exit Mock Exam?")) navigate("home"); }
+
+    function submitMockExam(force) {
+      const unanswered = activeMock.answers.filter(a => a === null).length;
+      if (!force && unanswered > 0 && !confirm(`You still have ${unanswered} unanswered question(s). Submit anyway?`)) return;
+      stopMockTimer(); activeMock.submitted = true;
+      document.getElementById("toolFab").style.display = "none"; closeToolDrawer();
+
+      let correct = 0; const reviewItems = [];
+      activeMock.questions.forEach((q, i) => {
+        const userAns = activeMock.answers[i], isCorrect = userAns === q.ans;
+        if (isCorrect) correct++; else addToMistakeBank(q, q.subjectCode);
+        reviewItems.push({ q, userAns, isCorrect });
+      });
+
+      const total = activeMock.questions.length, pct = Math.round((correct / total) * 100), earnedXp = correct * 15;
+      awardXp(earnedXp);
+      logScoreAttempt(activeMock.scopeCode === "ALL" ? "Overall" : activeMock.scopeCode, pct, "Mock");
+      updateStreak(); saveState();
+
+      let reviewHtml = reviewItems.map((item, idx) => `
+        <div class="card" style="border-left:4px solid ${item.isCorrect ? '#16A34A' : '#DC2626'};">
+          <div class="row-between mb-8"><span class="badge badge-purple">Q${idx + 1} · ${item.q.subjectCode}</span><span class="badge ${item.isCorrect ? 'badge-pass' : 'badge-risk'}">${item.isCorrect ? 'Correct' : 'Missed'}</span></div>
+          <div style="font-weight:700; font-size:14px; margin-bottom:6px;">${item.q.q}</div>
+          <div style="font-size:13px; color:var(--green-text); font-weight:700;">Correct Answer: ${item.q.choices[item.q.ans]}</div>
+          ${!item.isCorrect ? `<div style="font-size:12.5px; color:var(--red-text);">Your Answer: ${item.userAns !== null ? item.q.choices[item.userAns] : "Unanswered"}</div>` : ""}
+          <div class="text-muted mt-8" style="white-space:pre-line;">${item.q.exp}</div>
+        </div>`).join("");
+
+      document.getElementById("app").innerHTML = `
+        <div class="card" style="text-align:center; padding:22px 16px;">
+          <div class="section-label">Timed Mock Exam Result (${activeMock.scopeCode})</div>
+          <div style="font-size:44px; font-weight:800; margin:6px 0;">${pct}%</div>
+          <div class="text-muted mb-8">${correct} of ${total} correct · +${earnedXp} XP</div>
+          ${getStatusBadge(pct)}
+          <button class="btn btn-primary mt-12" onclick="navigate('home')">Back to Home</button>
+        </div>
+        <div class="section-label mt-12">Full Answer Key & Explanations</div>${reviewHtml}`;
+    }
+
+    // ==========================================
+    // 8. QUIZ & MISTAKE BANK ENGINE
+    // ==========================================
+    function startQuiz(code, moduleId, tier) {
+      const mod = getAllSubjects().find(s => s.code === code).modules.find(m => m.id === moduleId);
+      activeQuiz = { mode: "standard", code, moduleId, moduleTitle: mod.title, tier, questions: mod.quizzes[tier], index: 0, selected: null, correctCount: 0, xpEarned: 0, mistakes: [] };
+      navigate("quiz");
+    }
+
+    function startMistakeDrill() {
+      if (state.mistakeBank.length === 0) return;
+      activeQuiz = { mode: "mistakeDrill", code: "DRILL", moduleId: null, moduleTitle: "Mistake Bank", tier: "Review", questions: [...state.mistakeBank], index: 0, selected: null, correctCount: 0, xpEarned: 0, mistakes: [] };
+      navigate("quiz");
+    }
+
+    function renderQuizQuestion() {
+      const qObj = activeQuiz.questions[activeQuiz.index], total = activeQuiz.questions.length, letters = ["A", "B", "C", "D"];
+      const pct = Math.round(((activeQuiz.index + (activeQuiz.selected !== null ? 1 : 0)) / total) * 100);
+      let choicesHtml = qObj.choices.map((c, idx) => {
+        let cls = "choice-btn";
+        if (activeQuiz.selected !== null) { if (idx === qObj.ans) cls += " choice-correct"; else if (idx === activeQuiz.selected) cls += " choice-wrong"; }
+        return `<button class="${cls}" onclick="selectChoice(${idx})" ${activeQuiz.selected !== null ? "disabled" : ""}><span class="choice-letter">${letters[idx]}</span><span>${c}</span></button>`;
+      }).join("");
+      let feedbackHtml = "";
+      if (activeQuiz.selected !== null) {
+        const isCorrect = activeQuiz.selected === qObj.ans;
+        feedbackHtml = `
+          <div class="card" style="border-color:${isCorrect ? '#16A34A' : '#DC2626'}; background:${isCorrect ? 'var(--green-bg)' : 'var(--red-bg)'};">
+            <div style="font-weight:800; color:${isCorrect ? 'var(--green-text)' : 'var(--red-text)'}; margin-bottom:6px;">
+              ${isCorrect ? (activeQuiz.mode === 'mistakeDrill' ? "✅ Mastered & Cleared!" : "✅ Correct!") : "❌ Incorrect (Saved to Mistake Bank)"}
+            </div>
+            <div style="font-size:13px; white-space:pre-line;">${qObj.exp}</div>
+          </div>
+          <button class="btn btn-primary" onclick="nextQuestion()">${activeQuiz.index + 1 < total ? "Next Question ›" : "View Results"}</button>`;
+      }
+      const exitTarget = activeQuiz.mode === "mistakeDrill" ? "navigate('progress')" : `navigate('moduleDetail', {code:'${activeQuiz.code}', moduleId:'${activeQuiz.moduleId}'})`;
+      document.getElementById("app").innerHTML = `
+        <div class="row-between mb-8">
+          <button class="back-link" style="margin:0;" onclick="${exitTarget}">✕ Exit</button>
+          <span class="badge badge-purple">${activeQuiz.mode === 'mistakeDrill' ? '🎯 Mistake Bank' : activeQuiz.code + ' · ' + activeQuiz.tier}</span>
+          <span class="text-muted" style="font-weight:700;">${activeQuiz.index + 1}/${total}</span>
+        </div>
+        <div class="progress-track" style="margin-bottom:18px;"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div style="font-size:16px; font-weight:700; margin-bottom:16px;">${qObj.q}</div>${choicesHtml}${feedbackHtml}`;
+    }
+
+    function selectChoice(idx) {
+      if (activeQuiz.selected !== null) return;
+      activeQuiz.selected = idx;
+      const qObj = activeQuiz.questions[activeQuiz.index];
+      if (idx === qObj.ans) {
+        activeQuiz.correctCount++;
+        if (activeQuiz.mode === "mistakeDrill") { activeQuiz.xpEarned += 10; removeFromMistakeBank(qObj.id); }
+        else {
+          const baseXp = TIER_XP[activeQuiz.tier];
+          activeQuiz.xpEarned += state.questionHistory[qObj.id] ? Math.round(baseXp * 0.5) : baseXp;
+          state.questionHistory[qObj.id] = "correct";
+        }
+      } else {
+        activeQuiz.mistakes.push({ q: qObj.q, correctAns: qObj.choices[qObj.ans], exp: qObj.exp });
+        if (activeQuiz.mode === "standard") { if (!state.questionHistory[qObj.id]) state.questionHistory[qObj.id] = "missed"; addToMistakeBank(qObj, activeQuiz.code); }
+      }
+      renderQuizQuestion();
+    }
+
+    function nextQuestion() { if (activeQuiz.index + 1 < activeQuiz.questions.length) { activeQuiz.index++; activeQuiz.selected = null; renderQuizQuestion(); } else finishQuiz(); }
+
+    function finishQuiz() {
+      document.getElementById("toolFab").style.display = "none"; closeToolDrawer();
+      const total = activeQuiz.questions.length, pct = Math.round((activeQuiz.correctCount / total) * 100);
+      awardXp(activeQuiz.xpEarned); updateStreak();
+
+      if (activeQuiz.mode === "standard") {
+        const key = `${activeQuiz.moduleId}_${activeQuiz.tier}`;
+        if (pct >= (state.tierScores[key]?.bestPct || 0)) state.tierScores[key] = { bestPct: pct, correct: activeQuiz.correctCount, total };
+        logScoreAttempt(activeQuiz.code, pct, "Quiz");
+      }
+      saveState();
+
+      if (activeQuiz.mode === "mistakeDrill") {
+        document.getElementById("app").innerHTML = `
+          <div class="card" style="text-align:center; padding:24px 16px;">
+            <div style="font-size:36px;">🎯</div>
+            <div class="section-label mt-8">Mistake Bank Drill Complete</div>
+            <div style="font-size:40px; font-weight:800; margin:6px 0;">${activeQuiz.correctCount}/${total} Cleared</div>
+            <div class="text-muted mb-8">+${activeQuiz.xpEarned} XP earned · ${state.mistakeBank.length} remaining</div>
+            <button class="btn btn-primary mt-12" onclick="navigate('progress')">Back to CPALE Dashboard</button>
+          </div>`;
+        return;
+      }
+
+      const unlockedNext = pct >= 75 && activeQuiz.tier !== "Hard", nextTierName = activeQuiz.tier === "Basic" ? "Medium" : "Hard";
+      document.getElementById("app").innerHTML = `
+        <div class="card" style="text-align:center; padding:24px 16px;">
+          <div class="section-label">${activeQuiz.code} · ${activeQuiz.tier} Complete</div>
+          <div style="font-size:44px; font-weight:800; color:var(--text); margin:6px 0;">${pct}%</div>
+          <div class="text-muted mb-8">${activeQuiz.correctCount} of ${total} correct</div>${getStatusBadge(pct)}
+          <div class="grid-2 mt-12">
+            <div class="stat-box"><div class="stat-val">+${activeQuiz.xpEarned}</div><div class="stat-lbl">XP Earned</div></div>
+            <div class="stat-box"><div class="stat-val">${activeQuiz.mistakes.length}</div><div class="stat-lbl">Mistakes</div></div>
+          </div>
+          ${unlockedNext ? `<div class="callout" style="background:var(--green-bg); color:var(--green-text); font-weight:700; margin-top:14px;">🔓 ${nextTierName} Tier Unlocked!</div>` : ""}
+          <div class="mt-12" style="display:flex; flex-direction:column; gap:8px;">
+            ${unlockedNext ? `<button class="btn btn-primary" onclick="startQuiz('${activeQuiz.code}', '${activeQuiz.moduleId}', '${nextTierName}')">Start ${nextTierName} ›</button>` : ""}
+            ${activeQuiz.mistakes.length > 0 ? `<button class="btn btn-outline" onclick="showMistakes()">Review Mistakes (${activeQuiz.mistakes.length})</button>` : ""}
+            <button class="btn btn-outline" onclick="startQuiz('${activeQuiz.code}', '${activeQuiz.moduleId}', '${activeQuiz.tier}')">↻ Retry Quiz</button>
+            <button class="btn btn-outline" onclick="navigate('moduleDetail', {code:'${activeQuiz.code}', moduleId:'${activeQuiz.moduleId}'})">Back to Module</button>
+          </div>
+        </div>`;
+    }
+
+    function showMistakes() {
+      let html = activeQuiz.mistakes.map((m, i) => `
+        <div class="card"><div style="font-weight:700; margin-bottom:6px;">${i + 1}. ${m.q}</div><div style="color:var(--green-text); font-weight:700; font-size:13px; margin-bottom:6px;">Correct: ${m.correctAns}</div><div class="text-muted" style="white-space:pre-line;">${m.exp}</div></div>`).join("");
+      document.getElementById("app").innerHTML = `<div class="page-title">Review Mistakes</div>${html}<button class="btn btn-primary" onclick="navigate('moduleDetail', {code:'${activeQuiz.code}', moduleId:'${activeQuiz.moduleId}'})">Back to Module</button>`;
+    }
+
+    // ==========================================
+    // 9. HANDOUT VIEW & CUSTOM COLOR HIGHLIGHTER
+    // ==========================================
+    let cachedSelection = null;
+    document.addEventListener("selectionchange", () => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || sel.rangeCount === 0) return;
+      const range = sel.getRangeAt(0);
+      let node = range.commonAncestorContainer; if (node.nodeType === 3) node = node.parentNode;
+      const container = node.closest ? node.closest(".handout-body") : null;
+      if (!container) return;
+      const preRange = document.createRange(); preRange.selectNodeContents(container); preRange.setEnd(range.startContainer, range.startOffset);
+      const start = preRange.toString().length, end = start + range.toString().length;
+      if (end > start) cachedSelection = { key: container.dataset.annoKey, start, end };
+    });
+
+    function escapeHtml(str) { return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
+    function resolveHighlightBg(colorVal) {
+      if (colorVal === "yellow") return "#FEF08A";
+      if (colorVal === "green") return "#BBF7D0";
+      if (PRESET_HL_COLORS.includes(colorVal)) return colorVal;
+      if (/^#[0-9A-Fa-f]{6}$/.test(colorVal)) {
+        const r = parseInt(colorVal.slice(1,3),16), g = parseInt(colorVal.slice(3,5),16), b = parseInt(colorVal.slice(5,7),16);
+        return `rgba(${r}, ${g}, ${b}, ${state.theme === 'dark' ? 0.72 : 0.42})`;
+      }
+      return "#FEF08A";
+    }
+
+    function buildHighlightedHtml(text, ranges, code, moduleId, idx) {
+      if (!ranges || ranges.length === 0) return escapeHtml(text);
+      const charColors = new Array(text.length).fill(null);
+      ranges.forEach(r => { for (let i = Math.max(0, r.start); i < Math.min(text.length, r.end); i++) charColors[i] = r.color; });
+      let html = "", i = 0;
+      while (i < text.length) {
+        const col = charColors[i]; let j = i + 1;
+        while (j < text.length && charColors[j] === col) j++;
+        const chunk = escapeHtml(text.slice(i, j));
+        html += col ? `<mark class="hl-mark" style="background:${resolveHighlightBg(col)};" onclick="removeSingleHighlight('${code}','${moduleId}',${idx},${i},${j})">${chunk}</mark>` : chunk;
+        i = j;
+      }
+      return html;
+    }
+
+    function renderHandoutView(code, moduleId) {
+      const mod = getAllSubjects().find(s => s.code === code).modules.find(m => m.id === moduleId);
+      cachedSelection = null;
+      const allSwatches = [...PRESET_HL_COLORS, ...state.customHighlightColors];
+      const activeCol = state.activeHighlightColor || "#FEF08A";
+      let swatchesHtml = allSwatches.map(hex => `<button class="swatch-btn ${activeCol.toLowerCase() === hex.toLowerCase() ? 'active' : ''}" style="background:${resolveHighlightBg(hex)};" onmousedown="event.preventDefault()" onclick="selectHighlightColor('${hex}','${code}','${moduleId}')"></button>`).join("");
+      let sections = (mod.handout || []).map((sec, idx) => {
+        const key = `${moduleId}_${idx}`, anno = state.handoutAnnotations[key] || { ranges: [], note: "" };
+        const ranges = Array.isArray(anno.ranges) ? anno.ranges : [];
+        return `
+          <div class="card">
+            <div style="font-weight:800; font-size:15px; margin-bottom:6px;">${sec.title}</div>
+            <div class="handout-body" data-anno-key="${key}">${buildHighlightedHtml(sec.body, ranges, code, moduleId, idx)}</div>
+            ${sec.calloutText ? `<div class="callout ${sec.calloutType === 'formula' ? 'callout-formula' : 'callout-note'}">${escapeHtml(sec.calloutText)}</div>` : ""}
+            ${anno.note ? `<div class="personal-note"><strong>📌 My Note:</strong> ${escapeHtml(anno.note)}</div>` : ""}
+            <div class="anno-bar">
+              <button class="anno-btn" onmousedown="event.preventDefault()" onclick="applySelectionHighlight('${code}','${moduleId}',${idx})"><span class="dot-indicator" style="background:${resolveHighlightBg(activeCol)};"></span> Highlight</button>
+              ${ranges.length > 0 ? `<button class="anno-btn" onclick="clearSectionHighlights('${code}','${moduleId}',${idx})">✕ Clear All</button>` : ""}
+              <button class="anno-btn" style="margin-left:auto;" onclick="editHandoutNote('${code}','${moduleId}',${idx})">📝 ${anno.note ? "Edit Note" : "Add Note"}</button>
+            </div>
+          </div>`;
+      }).join("");
+
+      document.getElementById("app").innerHTML = `
+        <button class="back-link" onclick="navigate('handouts')">‹ All Handouts</button>
+        <div class="section-label">${code} · Annotate Handout</div>
+        <div class="page-title" style="margin-bottom:8px;">${mod.title}</div>
+        <div class="hl-toolbar">
+          <div class="row-between mb-8">
+            <div style="font-size:11px; font-weight:700; color:var(--muted);">HIGHLIGHTER COLOR</div>
+            <button class="btn btn-primary btn-sm" style="padding:5px 10px; font-size:11px;" onmousedown="event.preventDefault()" onclick="applySelectionHighlight('${code}','${moduleId}',null)">🖍 Apply to Selection</button>
+          </div>
+          <div class="swatch-row">${swatchesHtml}<label class="color-picker-label">🎨<input type="color" value="${/^#[0-9A-Fa-f]{6}$/.test(activeCol) ? activeCol : '#FF6B6B'}" onchange="addCustomHighlightColor(this.value,'${code}','${moduleId}')" /></label></div>
+        </div>
+        ${sections}
+        <button class="btn btn-primary mt-8" onclick="navigate('moduleDetail', {code:'${code}', moduleId:'${mod.id}'})">▶ Practice This Module</button>`;
+    }
+
+    function selectHighlightColor(hex, code, moduleId) { state.activeHighlightColor = hex; saveState(); renderHandoutView(code, moduleId); }
+    function addCustomHighlightColor(hex, code, moduleId) {
+      const upper = hex.toUpperCase();
+      if (!PRESET_HL_COLORS.includes(upper) && !state.customHighlightColors.includes(upper)) {
+        state.customHighlightColors.push(upper);
+        if (state.customHighlightColors.length > 6) state.customHighlightColors.shift();
+      }
+      state.activeHighlightColor = upper; saveState(); renderHandoutView(code, moduleId);
+    }
+    function applySelectionHighlight(code, moduleId, idx) {
+      let targetKey = idx !== null ? `${moduleId}_${idx}` : (cachedSelection ? cachedSelection.key : null);
+      if (!cachedSelection || cachedSelection.key !== targetKey) { alert("Select a word or phrase first (long-press & drag), then tap Highlight!"); return; }
+      const existing = state.handoutAnnotations[targetKey] || { ranges: [], note: "" };
+      if (!Array.isArray(existing.ranges)) existing.ranges = [];
+      existing.ranges.push({ start: cachedSelection.start, end: cachedSelection.end, color: state.activeHighlightColor || "#FEF08A" });
+      state.handoutAnnotations[targetKey] = existing; cachedSelection = null;
+      if (window.getSelection) window.getSelection().removeAllRanges();
+      saveState(); renderHandoutView(code, moduleId);
+    }
+    function removeSingleHighlight(code, moduleId, idx, start, end) {
+      if (!confirm("Remove this highlight?")) return;
+      const key = `${moduleId}_${idx}`, existing = state.handoutAnnotations[key];
+      if (!existing || !Array.isArray(existing.ranges)) return;
+      const secText = getAllSubjects().find(s => s.code === code).modules.find(m => m.id === moduleId).handout[idx].body;
+      const charColors = new Array(secText.length).fill(null);
+      existing.ranges.forEach(r => { for (let i = r.start; i < r.end; i++) charColors[i] = r.color; });
+      for (let i = start; i < end; i++) charColors[i] = null;
+      const newRanges = []; let i = 0;
+      while (i < charColors.length) {
+        if (charColors[i]) { const col = charColors[i]; let j = i + 1; while (j < charColors.length && charColors[j] === col) j++; newRanges.push({ start: i, end: j, color: col }); i = j; } else i++;
+      }
+      existing.ranges = newRanges; saveState(); renderHandoutView(code, moduleId);
+    }
+    function clearSectionHighlights(code, moduleId, idx) { if (!confirm("Clear all highlights in this section?")) return; if (state.handoutAnnotations[`${moduleId}_${idx}`]) state.handoutAnnotations[`${moduleId}_${idx}`].ranges = []; saveState(); renderHandoutView(code, moduleId); }
+    function editHandoutNote(code, moduleId, idx) {
+      const key = `${moduleId}_${idx}`, existing = state.handoutAnnotations[key] || { ranges: [], note: "" };
+      const text = prompt("Add or edit your personal study note (leave blank to delete):", existing.note || "");
+      if (text !== null) { existing.note = text.trim(); state.handoutAnnotations[key] = existing; saveState(); renderHandoutView(code, moduleId); }
+    }
+
+    // ==========================================
+    // 10. CALCULATOR & SCRATCHPAD
+    // ==========================================
+    let calcExpr = "", calcCurrentResult = "0", calcMemory = 0, calcJustEvaluated = false;
+    function openToolDrawer() { document.getElementById("scratchpadText").value = state.scratchpad || ""; document.getElementById("toolBackdrop").classList.add("open"); updateCalcUI(); }
+    function closeToolDrawer() { document.getElementById("toolBackdrop").classList.remove("open"); }
+    function switchToolTab(tab) {
+      document.getElementById("tabBtnCalc").classList.toggle("active", tab === "calc");
+      document.getElementById("tabBtnPad").classList.toggle("active", tab === "pad");
+      document.getElementById("toolPaneCalc").style.display = tab === "calc" ? "block" : "none";
+      document.getElementById("toolPanePad").style.display = tab === "pad" ? "block" : "none";
+    }
+    function formatAccountingNumber(val) {
+      if (val === "Error" || val === "" || isNaN(Number(val))) return val || "0";
+      const parts = String(val).split("."); parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ","); return parts.join(".");
+    }
+    function updateCalcUI() {
+      document.getElementById("calcTape").textContent = calcExpr.replace(/\*/g, "×").replace(/\//g, "÷");
+      document.getElementById("calcVal").textContent = formatAccountingNumber(calcCurrentResult);
+      document.getElementById("btnMR").textContent = calcMemory !== 0 ? `MR (${formatAccountingNumber(calcMemory)})` : "MR";
+    }
+    function calcInput(ch) {
+      const isOp = ["+", "-", "*", "/"].includes(ch);
+      if (calcJustEvaluated) { calcExpr = isOp ? (calcCurrentResult === "Error" ? "" : calcCurrentResult) : ""; calcJustEvaluated = false; }
+      if (isOp && calcExpr === "") return;
+      if (isOp && ["+", "-", "*", "/"].includes(calcExpr.slice(-1))) calcExpr = calcExpr.slice(0, -1) + ch; else calcExpr += ch;
+      const lastNum = calcExpr.split(/[+\-*/]/).pop(); if (lastNum) calcCurrentResult = lastNum; updateCalcUI();
+    }
+    function calcAction(act) {
+      if (act === "AC") { calcExpr = ""; calcCurrentResult = "0"; calcJustEvaluated = false; }
+      else if (act === "DEL") { if (calcJustEvaluated) { calcExpr = ""; calcCurrentResult = "0"; calcJustEvaluated = false; } else { calcExpr = calcExpr.slice(0, -1); calcCurrentResult = calcExpr.split(/[+\-*/]/).pop() || "0"; } }
+      else if (act === "%") { const v = parseFloat(calcCurrentResult); if (!isNaN(v)) { const p = String(Math.round((v / 100) * 1e10) / 1e10); calcExpr = calcExpr.replace(/[0-9.]+$/, p); calcCurrentResult = p; } }
+      updateCalcUI();
+    }
+    function calcEval() {
+      if (!calcExpr) return;
+      const clean = calcExpr.replace(/[+\-*/.]+$/, "");
+      if (!/^[0-9+\-*/().\s]+$/.test(clean)) { calcCurrentResult = "Error"; updateCalcUI(); return; }
+      try { const raw = Function(`"use strict"; return (${clean});`)(); calcCurrentResult = isFinite(raw) ? String(Math.round(raw * 1e8) / 1e8) : "Error"; calcJustEvaluated = true; } catch (e) { calcCurrentResult = "Error"; }
+      updateCalcUI();
+    }
+    function calcMem(op) {
+      const cur = parseFloat(calcCurrentResult) || 0;
+      if (op === "MC") calcMemory = 0; else if (op === "M+") calcMemory = Math.round((calcMemory + cur) * 1e8) / 1e8; else if (op === "M-") calcMemory = Math.round((calcMemory - cur) * 1e8) / 1e8; else if (op === "MR") { calcInput(String(calcMemory)); return; }
+      updateCalcUI();
+    }
+    function saveScratchpad() { state.scratchpad = document.getElementById("scratchpadText").value; saveState(); }
+    function pasteCalcToPad() { const el = document.getElementById("scratchpadText"); el.value += (el.value && !el.value.endsWith("\n") ? " " : "") + formatAccountingNumber(calcCurrentResult); saveScratchpad(); }
+    function clearScratchpad() { if (confirm("Clear your scratchpad notes?")) { document.getElementById("scratchpadText").value = ""; saveScratchpad(); } }
+
+    // --- FLASHCARDS ---
+    function startFlashcards(code, moduleId) {
+      const mod = getAllSubjects().find(s => s.code === code).modules.find(m => m.id === moduleId);
+      activeDeck = { code, moduleId, moduleTitle: mod.title, original: [...mod.flashcards], queue: [...mod.flashcards], mastered: 0, flipped: false };
+      navigate("flashcards");
+    }
+    function renderFlashcard() {
+      if (activeDeck.queue.length === 0) {
+        document.getElementById("app").innerHTML = `
+          <div class="card" style="text-align:center; padding:28px 16px;">
+            <div style="font-size:36px;">🎉</div>
+            <div class="section-label mt-8">${activeDeck.code} · Flashcards Complete</div>
+            <div class="page-title" style="margin-bottom:6px;">Deck Mastered!</div>
+            <div class="text-muted mb-8">Mastered all ${activeDeck.mastered} cards in ${activeDeck.moduleTitle}.</div>
+            <div class="mt-12" style="display:flex; flex-direction:column; gap:8px;">
+              <button class="btn btn-primary" onclick="startFlashcards('${activeDeck.code}','${activeDeck.moduleId}')">↻ Study Again</button>
+              <button class="btn btn-outline" onclick="navigate('moduleDetail', {code:'${activeDeck.code}', moduleId:'${activeDeck.moduleId}'})">Back to Module</button>
+            </div>
+          </div>`;
+        return;
+      }
+      const card = activeDeck.queue[0], total = activeDeck.original.length, pct = Math.round((activeDeck.mastered / total) * 100);
+      document.getElementById("app").innerHTML = `
+        <div class="row-between mb-8">
+          <button class="back-link" style="margin:0;" onclick="navigate('moduleDetail', {code:'${activeDeck.code}', moduleId:'${activeDeck.moduleId}'})">✕ Exit</button>
+          <span class="badge badge-purple">${activeDeck.mastered}/${total} Mastered</span>
+          <button class="btn btn-outline btn-sm" onclick="shuffleDeck()">🔀 Shuffle</button>
+        </div>
+        <div class="progress-track" style="margin-bottom:18px;"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="flashcard-box ${activeDeck.flipped ? 'flipped' : ''}" onclick="flipCard()">
+          ${card.tag ? `<span class="badge badge-purple mb-8">${card.tag}</span>` : ""}
+          <div style="font-size:${activeDeck.flipped ? '15px' : '18px'}; font-weight:${activeDeck.flipped ? '600' : '800'}; white-space:pre-line;">${activeDeck.flipped ? card.back : card.front}</div>
+          <div class="fc-hint">${activeDeck.flipped ? "Showing Answer · Tap to flip back" : "Tap card to reveal answer"}</div>
+        </div>
+        ${activeDeck.flipped ? `<div class="grid-2 mt-12"><button class="btn btn-warn" onclick="rateCard(false)">↻ Need Review</button><button class="btn btn-success" onclick="rateCard(true)">✓ Got It</button></div>`
+                             : `<div class="text-muted mt-12" style="text-align:center;">${activeDeck.queue.length} card(s) left in queue</div>`}`;
+    }
+    function flipCard() { activeDeck.flipped = !activeDeck.flipped; renderFlashcard(); }
+    function shuffleDeck() { activeDeck.queue.sort(() => Math.random() - 0.5); activeDeck.flipped = false; renderFlashcard(); }
+    function rateCard(gotIt) { const c = activeDeck.queue.shift(); if (gotIt) activeDeck.mastered++; else activeDeck.queue.push(c); activeDeck.flipped = false; renderFlashcard(); }
+
+    // --- PROGRESS DASHBOARD (WITH SCORE TREND CHART) ---
+    function setTrendFilter(code) { trendFilter = code; renderProgress(); }
+
+    function renderProgress() {
+      const readiness = getReadinessScore();
+      const sorted = getAllSubjects().map(s => ({ ...s, acc: getSubjectAccuracy(s.code) })).sort((a, b) => (a.acc === null ? 999 : a.acc) - (b.acc === null ? 999 : b.acc));
+      const trendChips = ["Overall", "FAR", "AFAR", "MAS", "TAX", "RFBT", "AUD"].map(c =>
+        `<button class="chip-btn ${trendFilter === c ? 'active' : ''}" onclick="setTrendFilter('${c}')">${c}</button>`).join("");
+
+      let priorityHtml = sorted.map(s => `
+        <div class="card card-clickable" onclick="navigate('subjectDetail', {code:'${s.code}'})">
+          <div class="row-between">
+            <div style="min-width:0;">
+              <div style="font-weight:700; font-size:14px;">${s.code} · ${s.name}</div>
+              ${s.acc !== null && s.acc < 65 ? `<div style="color:var(--red-text); font-size:11px; font-weight:700;">⚠ Below 65% minimum threshold</div>` : ""}
+            </div>
+            ${getStatusBadge(s.acc)}
+          </div>
+        </div>`).join("");
+
+      document.getElementById("app").innerHTML = `
+        <div class="row-between">
+          <div><div class="section-label">Performance</div><div class="page-title" style="margin-bottom:8px;">CPALE Dashboard</div></div>
+          <button class="btn btn-outline btn-sm" onclick="navigate('manage')">⚙️ Manage</button>
+        </div>
+
+        <div class="card" style="text-align:center;">
+          <div class="section-label">CPALE Readiness Score</div>
+          <div style="font-size:40px; font-weight:800; color:var(--primary); margin:4px 0;">${readiness === null ? "--" : readiness + "%"}</div>
+          <div class="mb-8">${getStatusBadge(readiness)}</div>
+          <div class="text-muted">Target: 75% overall · Min. 65% per subject</div>
+        </div>
+
+        <div class="card">
+          <div class="section-label">Score Trend (Last 10 Attempts)</div>
+          <div class="chip-strip mt-8">${trendChips}</div>
+          ${buildScoreTrendSvg(trendFilter)}
+        </div>
+
+        <div class="card" style="border-color: ${state.mistakeBank.length > 0 ? '#FCA5A5' : 'var(--border)'};">
+          <div class="row-between">
+            <div>
+              <div style="font-weight:800; font-size:15px;">🎯 Weak-Area Mistake Bank</div>
+              <div class="text-muted">${state.mistakeBank.length > 0 ? state.mistakeBank.length + " missed question(s) waiting for mastery" : "All clear! No missed questions right now."}</div>
+            </div>
+            ${state.mistakeBank.length > 0 ? `<button class="btn btn-danger btn-sm" onclick="startMistakeDrill()">Drill Now</button>` : `<span class="badge badge-pass">Clean</span>`}
+          </div>
+        </div>
+
+        <div class="section-label mt-12">Priority Subjects (Lowest First)</div>
+        ${priorityHtml}
+        <button class="btn btn-danger mt-12" onclick="resetAllProgress()">Reset Study Progress</button>`;
+    }
+
+    function resetAllProgress() {
+      if (confirm("Reset XP, streaks, quiz scores, trend history, and Mistake Bank? (Your imported modules, theme, & handout notes will be kept.)")) {
+        const keep = { theme: state.theme, dailyXpGoal: state.dailyXpGoal, customData: state.customData, handoutAnnotations: state.handoutAnnotations, customHighlightColors: state.customHighlightColors };
+        state = { ...getDefaultState(), ...keep };
+        saveState(); renderProgress();
+      }
+    }
+
+    // ==========================================
+    // 11. MANAGE CONTENT (FILE UPLOAD/DOWNLOAD + PASTE)
+    // ==========================================
+    const SAMPLES = {
+      questions: `subject_code,module_id,module_title,tier,question,choice_a,choice_b,choice_c,choice_d,correct_answer,explanation\nFAR,far-m2,Cash & Cash Equivalents,Basic,"Which of the following is considered a cash equivalent under PAS 7?","3-month Treasury bill purchased 2 months before maturity","Equity shares held for trading","6-month time deposit","Postdated customer check",A,"Cash equivalents are short-term, highly liquid investments with original maturity of 3 months or less from date of acquisition."`,
+      handouts: `subject_code,module_id,module_title,section_title,content,callout_type,callout_text\nFAR,far-m2,Cash & Cash Equivalents,"1. Cash Equivalents (PAS 7)","Short-term, highly liquid investments readily convertible to known amounts of cash with insignificant risk of changes in value.",note,"PAS 7 Rule: Must be acquired 3 months or less BEFORE maturity date."`,
+      flashcards: `subject_code,module_id,module_title,front,back,tag\nFAR,far-m2,Cash & Cash Equivalents,"How are bank overdrafts presented under PFRS?","Generally as a Current Liability, unless repayable on demand and an integral part of cash management.",PAS 7`
+    };
+
+    function downloadFile(filename, content, mimeType) {
+      try {
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a); URL.revokeObjectURL(url);
+      } catch (e) {
+        alert("Direct file download is restricted in this preview. Use Copy/Paste instead!");
+      }
+    }
+
+    function handleCsvFileUpload(evt) {
+      const file = evt.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById("csvInput").value = e.target.result;
+        previewCsvImport();
+      };
+      reader.readAsText(file);
+    }
+
+    function handleBackupFileUpload(evt) {
+      const file = evt.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => applyRestoredJson(e.target.result);
+      reader.readAsText(file);
+    }
+
+    function getCustomImportedSummary() {
+      const list = [], seen = new Set(), allSubjs = getAllSubjects();
+      Object.keys(state.customData.modules || {}).forEach(subjCode => (state.customData.modules[subjCode] || []).forEach(m => {
+        if (!seen.has(m.id)) { seen.add(m.id); list.push({ subjCode, modId: m.id, title: m.title }); }
+      }));
+      new Set([...Object.keys(state.customData.questions || {}), ...Object.keys(state.customData.handouts || {}), ...Object.keys(state.customData.flashcards || {})]).forEach(modId => {
+        if (!seen.has(modId)) {
+          let foundSubj = "CUSTOM", foundTitle = modId;
+          allSubjs.forEach(s => s.modules.forEach(m => { if (m.id === modId) { foundSubj = s.code; foundTitle = m.title; } }));
+          seen.add(modId); list.push({ subjCode: foundSubj, modId, title: foundTitle });
+        }
+      });
+      return list.map(item => {
+        const cq = state.customData.questions[item.modId];
+        return {
+          ...item,
+          qCount: cq ? (cq.Basic?.length || 0) + (cq.Medium?.length || 0) + (cq.Hard?.length || 0) : 0,
+          hCount: state.customData.handouts[item.modId]?.length || 0,
+          fCount: state.customData.flashcards[item.modId]?.length || 0
+        };
+      }).filter(item => item.qCount + item.hCount + item.fCount > 0 || (state.customData.modules[item.subjCode] || []).some(m => m.id === item.modId));
+    }
+
+    function deleteCustomModule(subjCode, modId, title) {
+      if (!confirm(`Delete all custom imported content for "${title}" (${modId})?`)) return;
+      delete state.customData.questions[modId]; delete state.customData.handouts[modId]; delete state.customData.flashcards[modId];
+      if (state.customData.modules[subjCode]) state.customData.modules[subjCode] = state.customData.modules[subjCode].filter(m => m.id !== modId);
+      saveState(); renderManageContent();
+    }
+
+    function renderManageContent() {
+      importPreviewData = null;
+      const customList = getCustomImportedSummary();
+      const customHtml = customList.length === 0 ? `<div class="text-muted">No custom imported modules yet.</div>`
+        : customList.map(c => `
+            <div class="row-between" style="padding:10px 0; border-top:1px dashed var(--border);">
+              <div style="min-width:0;"><div style="font-weight:700; font-size:13.5px;">${c.subjCode} · ${escapeHtml(c.title)}</div><div class="text-muted" style="font-size:12px;">${c.qCount} Q · ${c.hCount} Handout · ${c.fCount} Card(s)</div></div>
+              <button class="btn btn-danger btn-sm" onclick="deleteCustomModule('${c.subjCode}','${c.modId}','${escapeHtml(c.title)}')">🗑 Delete</button>
+            </div>`).join("");
+
+      document.getElementById("app").innerHTML = `
+        <button class="back-link" onclick="navigate('progress')">‹ Back to Dashboard</button>
+        <div class="section-label">Content Pipeline</div>
+        <div class="page-title">Manage Content</div>
+        <div class="tab-bar">
+          <button class="tab-btn ${importTab === 'questions' ? 'active' : ''}" onclick="switchImportTab('questions')">Questions</button>
+          <button class="tab-btn ${importTab === 'handouts' ? 'active' : ''}" onclick="switchImportTab('handouts')">Handouts</button>
+          <button class="tab-btn ${importTab === 'flashcards' ? 'active' : ''}" onclick="switchImportTab('flashcards')">Flashcards</button>
+        </div>
+
+        <div class="card">
+          <div style="font-weight:800; font-size:14px; margin-bottom:8px;">Import ${importTab.toUpperCase()} (.CSV)</div>
+          <div class="grid-2 mb-8">
+            <label class="btn btn-outline btn-sm file-btn" style="width:100%;">📂 Upload .CSV<input type="file" onchange="handleCsvFileUpload(event)" /></label>
+            <button class="btn btn-outline btn-sm" style="width:100%;" onclick="downloadFile('gal_${importTab}_template.csv', SAMPLES[importTab], 'text/csv')">⬇ Sample .CSV</button>
+          </div>
+          <div class="row-between mb-8">
+            <span class="text-muted" style="font-size:12px;">Or paste CSV rows below:</span>
+            <button class="btn btn-outline btn-sm" style="padding:4px 9px; font-size:11px;" onclick="pasteSampleCsv()">Paste Sample</button>
+          </div>
+          <textarea id="csvInput" class="code-input" placeholder="Paste CSV rows here (including header row)..."></textarea>
+          <button class="btn btn-primary mt-8" onclick="previewCsvImport()">Check & Preview</button>
+          <div id="importPreviewBox" class="mt-12"></div>
+        </div>
+
+        <div class="card">
+          <div style="font-weight:800; font-size:15px; margin-bottom:6px;">Custom Imported Modules (${customList.length})</div>
+          ${customHtml}
+        </div>
+
+        <div class="card">
+          <div style="font-weight:800; font-size:15px; margin-bottom:6px;">Backup & Restore (JSON)</div>
+          <div class="text-muted mb-8">Saves all imported modules, highlights, notes, trend history, and XP.</div>
+          <div class="grid-2 mb-8">
+            <button class="btn btn-outline btn-sm" style="width:100%;" onclick="downloadFile('project_gal_backup.json', JSON.stringify(state, null, 2), 'application/json')">⬇ Save .JSON</button>
+            <label class="btn btn-outline btn-sm file-btn" style="width:100%;">📂 Load .JSON<input type="file" onchange="handleBackupFileUpload(event)" /></label>
+          </div>
+          <div class="grid-2">
+            <button class="btn btn-outline btn-sm" style="width:100%;" onclick="exportBackup()">📋 Copy JSON</button>
+            <button class="btn btn-outline btn-sm" style="width:100%;" onclick="restoreBackup()">📥 Paste JSON</button>
+          </div>
+        </div>`;
+    }
+
+    function switchImportTab(tab) { importTab = tab; renderManageContent(); }
+    function pasteSampleCsv() { document.getElementById("csvInput").value = SAMPLES[importTab]; }
+
+    function parseCSV(text) {
+      const rows = []; let row = [], val = "", inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i], next = text[i + 1];
+        if (inQuotes) { if (c === '"' && next === '"') { val += '"'; i++; } else if (c === '"') inQuotes = false; else val += c; }
+        else {
+          if (c === '"') inQuotes = true;
+          else if (c === ',') { row.push(val.trim()); val = ""; }
+          else if (c === '\n' || c === '\r') { if (c === '\r' && next === '\n') i++; row.push(val.trim()); if (row.some(cell => cell !== "")) rows.push(row); row = []; val = ""; }
+          else val += c;
+        }
+      }
+      if (val !== "" || row.length > 0) { row.push(val.trim()); if (row.some(cell => cell !== "")) rows.push(row); }
+      return rows;
+    }
+
+    function previewCsvImport() {
+      const raw = document.getElementById("csvInput").value.trim(), box = document.getElementById("importPreviewBox");
+      if (!raw) { box.innerHTML = `<div class="badge badge-risk">Please upload or paste CSV data first.</div>`; return; }
+      const rows = parseCSV(raw);
+      if (rows.length < 2) { box.innerHTML = `<div class="badge badge-risk">Need a header row and at least 1 data row.</div>`; return; }
+      const valid = [], errors = [], validSubjs = ["FAR", "AFAR", "MAS", "TAX", "RFBT", "AUD"];
+
+      for (let i = 1; i < rows.length; i++) {
+        const r = rows[i], subj = (r[0] || "").toUpperCase();
+        if (!validSubjs.includes(subj)) { errors.push(`Row ${i + 1}: Invalid subject '${r[0]}'`); continue; }
+        if (importTab === "questions") {
+          const [_, modId, modTitle, tier, q, a, b, c, d, ans, exp] = r;
+          const ansIdx = ["A", "B", "C", "D"].indexOf((ans || "").toUpperCase());
+          if (!modId || !q || ansIdx === -1 || !["Basic", "Medium", "Hard"].includes(tier)) { errors.push(`Row ${i + 1}: Check tier or correct_answer (A-D).`); continue; }
+          valid.push({ subj, modId, modTitle: modTitle || modId, tier, item: { id: `${modId}-${Date.now()}-${i}`, q, choices: [a, b, c, d], ans: ansIdx, exp: exp || "" } });
+        } else if (importTab === "handouts") {
+          const [_, modId, modTitle, secTitle, body, calloutType, calloutText] = r;
+          if (!modId || !secTitle || !body) { errors.push(`Row ${i + 1}: Missing module_id, section_title, or content.`); continue; }
+          valid.push({ subj, modId, modTitle: modTitle || modId, item: { title: secTitle, body, calloutType: calloutType || "none", calloutText: calloutText || "" } });
+        } else if (importTab === "flashcards") {
+          const [_, modId, modTitle, front, back, tag] = r;
+          if (!modId || !front || !back) { errors.push(`Row ${i + 1}: Missing module_id, front, or back.`); continue; }
+          valid.push({ subj, modId, modTitle: modTitle || modId, item: { front, back, tag: tag || "" } });
+        }
+      }
+      importPreviewData = valid;
+      box.innerHTML = `
+        <div class="callout" style="background:${valid.length ? 'var(--green-bg)' : 'var(--red-bg)'}; color:${valid.length ? 'var(--green-text)' : 'var(--red-text)'};">
+          <strong>Detected ${valid.length} valid ${importTab}</strong> · ${errors.length} error(s).
+          ${errors.length ? `<div style="margin-top:6px; font-size:12px;">${errors.join("<br>")}</div>` : ""}
+        </div>
+        ${valid.length > 0 ? `<button class="btn btn-success" onclick="confirmCsvImport()">✓ Confirm & Save ${valid.length} Item(s)</button>` : ""}`;
+    }
+
+    function confirmCsvImport() {
+      if (!importPreviewData || importPreviewData.length === 0) return;
+      importPreviewData.forEach(entry => {
+        const { subj, modId, modTitle, tier, item } = entry;
+        if (!state.customData.modules[subj]) state.customData.modules[subj] = [];
+        if (!state.customData.modules[subj].some(m => m.id === modId)) state.customData.modules[subj].push({ id: modId, title: modTitle, subtitle: "Imported module", isCustom: true });
+        if (importTab === "questions") { if (!state.customData.questions[modId]) state.customData.questions[modId] = { Basic: [], Medium: [], Hard: [] }; state.customData.questions[modId][tier].push(item); }
+        else if (importTab === "handouts") { if (!state.customData.handouts[modId]) state.customData.handouts[modId] = []; state.customData.handouts[modId].push(item); }
+        else if (importTab === "flashcards") { if (!state.customData.flashcards[modId]) state.customData.flashcards[modId] = []; state.customData.flashcards[modId].push(item); }
+      });
+      saveState(); alert(`Successfully imported ${importPreviewData.length} ${importTab}!`); renderManageContent();
+    }
+
+    function exportBackup() {
+      const json = JSON.stringify(state);
+      if (navigator.clipboard) navigator.clipboard.writeText(json).then(() => alert("Full Backup JSON copied to clipboard!"));
+      else prompt("Copy your Full Backup JSON below:", json);
+    }
+    function applyRestoredJson(raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.xp === "number") { state = { ...getDefaultState(), ...parsed }; applyTheme(); saveState(); alert("Backup restored successfully!"); navigate("progress"); }
+        else alert("Invalid backup format.");
+      } catch (e) { alert("Could not read JSON."); }
+    }
+    function restoreBackup() { const raw = prompt("Paste your saved Backup JSON here:"); if (raw) applyRestoredJson(raw); }
+
+    // Initialize
+    applyTheme();
+    updateHeader();
+    renderHome();
+
+    // Register Offline Service Worker (activates once hosted on HTTPS)
+    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

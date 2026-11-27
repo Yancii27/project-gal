@@ -1,0 +1,18 @@
+{
+  "name": "PROJECT: GAL — Gamifying Accounting Lessons",
+  "short_name": "PROJECT: GAL",
+  "description": "Personal CPALE review app with tiered quizzes, flashcards, handouts, and analytics.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F0D1A",
+  "theme_color": "#5B21B6",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
